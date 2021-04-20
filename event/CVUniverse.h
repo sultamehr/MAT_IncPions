@@ -92,6 +92,17 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
   }
   */
 
+  //Muon kinematics
+  double GetMuonPT() const //GeV/c
+  {
+    return GetPmu()/1000. * sin(GetThetamu());
+  }
+
+  double GetMuonPTTrue() const //GeV/c
+  {
+    return GetPlepTrue()/1000. * sin(GetThetalepTrue());
+  }
+
   int GetInteractionType() const {
     return GetInt("mc_intType");
   }
@@ -174,7 +185,7 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
   }
   
   virtual double GetPionKE(int i) const{
-    double pionKE = GetPionE(i) - GetPionMass(i);
+    return GetPionE(i) - GetPionMass(i);
   }
 
   virtual double GetLowTpi() const {

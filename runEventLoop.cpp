@@ -314,9 +314,11 @@ int main(const int /*argc*/, const char** /*argv*/)
   std::map< std::string, std::vector<CVUniverse*> > truth_bands =
       GetStandardSystematics(truth);
 
+  //TODO: pT, pz?
   std::vector<Variable*> vars = {
-  new Variable("tpi", "T#pi [MeV]", 100, 0., .5, &CVUniverse::GetLowTpi, &CVUniverse::GetLowTpi),
-  new Variable("q3", "q3 (GeV)", 100, 0.0, 1.3, &CVUniverse::Getq3, &CVUniverse::Getq3)
+  new Variable("pTmu", "p_{T, #mu} [GeV/c]", 30, 0, 4.5, &CVUniverse::GetMuonPT, &CVUniverse::GetMuonPTTrue)
+  /*new Variable("tpi", "T#pi [MeV]", 100, 0., .5, &CVUniverse::GetLowTpi, &CVUniverse::GetLowTpi),
+  new Variable("q3", "q3 (GeV)", 100, 0.0, 1.3, &CVUniverse::Getq3, &CVUniverse::Getq3)*/
   };
   std::vector<Study*> studies;
 
