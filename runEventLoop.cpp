@@ -406,6 +406,6 @@ int main(const int /*argc*/, const char** /*argv*/)
   outDir->Write();
   TFile* dataDir = TFile::Open("DataStudyHists.root", "RECREATE");
   for(auto& study: data_studies) study->SaveOrDraw(*dataDir);  
-  std::cout << mycuts << std::endl; 
+  std::cout << std::endl << mycuts << std::endl; 
   std::cout << "Success" << std::endl;
 }
