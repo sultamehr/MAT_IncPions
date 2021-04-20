@@ -9,7 +9,7 @@
 #define UTIL_SAFEROOTNAME_CPP
 
 //NucCCNeutrons includes
-#include "SafeROOTName.h"
+#include "util/SafeROOTName.h"
 
 namespace util
 {

@@ -1,8 +1,8 @@
 #ifndef MatchedMichel_h
 #define MatchedMichel_h
 
-#include "Michel.h"
-#include "CVUniverse.h"
+#include "event/Michel.h"
+#include "event/CVUniverse.h"
 
 struct MatchedMichel {
     int m_idx; // Index for matched Michel 

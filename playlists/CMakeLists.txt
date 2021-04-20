@@ -1,0 +1,1 @@
+install(FILES CCQENu_minervame1A_DATA_Inextinguishable_merged.txt CCQENu_minervame1A_MC_Extended2p2h_Inextinguishable_merged.txt CCQENu_minervame1A_MC_Inextinguishable_merged.txt playlist_data_morefiles.txt playlist_data.txt playlist_mc_morefiles.txt playlist_mc.txt DESTINATION etc/playlists)

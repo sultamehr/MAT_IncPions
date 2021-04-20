@@ -1,7 +1,7 @@
 #include "studies/Study.h"
-#include "MichelEvent.h"
-#include "Categorized.h"
-#include "CVUniverse.h"
+#include "event/MichelEvent.h"
+#include "util/Categorized.h"
+#include "event/CVUniverse.h"
 
 #include <functional> //for std::function
 

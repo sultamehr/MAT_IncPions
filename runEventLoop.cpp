@@ -23,40 +23,37 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Woverloaded-virtual"
 
-#include "CVUniverse.h"
-#include "Systematics.h"
+#include "event/CVUniverse.h"
+#include "systematics/Systematics.h"
 
 #include "PlotUtils/makeChainWrapper.h"
 #include "PlotUtils/HistWrapper.h"
 #include "PlotUtils/MacroUtil.h"
-#ifndef __CINT__
 #include "PlotUtils/MnvPlotter.h"
 #include "PlotUtils/cuts/CCInclusiveCuts.h"
 #include "PlotUtils/cuts/CCInclusiveSignal.h"
-#include "Categorized.h"
+#include "util/Categorized.h"
 #include "PlotUtils/Cutter.h"
-#include "Variable.h"
-#include "BestMichelDistance.h"
-#include "BestMichelDistance2D.h"
-#include "SignalDefinition.h"
-#include "q3RecoCut.h"
-#include "hasMichel.h"
+#include "util/Variable.h"
+#include "cuts/BestMichelDistance.h"
+#include "cuts/BestMichelDistance2D.h"
+#include "cuts/SignalDefinition.h"
+#include "cuts/q3RecoCut.h"
+#include "cuts/hasMichel.h"
 #include "studies/Study.h"
 #include "studies/PerMichelVarByGENIELabel.h"
 #include "studies/PerMichelEventVarByGENIELabel.h" 
 #include "studies/CreateDataHistPerMichelEvent.h"
 #include "studies/CreateDataHistPerMichel.h"
-#endif //CINT
-#include "Michel.h"
-#include "Cluster.h"
-#include "MichelEvent.h"
-#include "MatchedMichel.h"
+#include "event/Michel.h"
+#include "event/Cluster.h"
+#include "event/MichelEvent.h"
+#include "event/MatchedMichel.h"
 //#include "Binning.h" //TODO: Fix me
 #pragma GCC diagnostic pop
 #include <iostream>
 
 class Variable;
-
 
 // Histogram binning constants
 const int nbins = 30;
@@ -64,77 +61,71 @@ const double xmin = 0.;
 const double xmax = 20.e3;
 
 //==============================================================================
-// Cuts
-//==============================================================================
-
-
-
-
-//==============================================================================
 // Plot
 //==============================================================================
-void PlotErrorSummary(PlotUtils::MnvH1D* h, std::string label) {
+void PlotErrorSummary(PlotUtils::MnvH1D* h, std::string label)
+{
   PlotUtils::MnvH1D* hist = (PlotUtils::MnvH1D*)h->Clone("hist");
   PlotUtils::MnvPlotter mnv_plotter( kCompactStyle);
   TCanvas cE("c1", "c1");
 
   // Group GENIE bands
-    mnv_plotter.error_summary_group_map.clear();
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrAbs_N");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrAbs_pi");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrCEx_N");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrCEx_pi");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrElas_N");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrElas_pi");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrInel_N");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrPiProd_N");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back(
-        "GENIE_FrPiProd_pi");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_MFP_N");
-    mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_MFP_pi");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_AGKYxF1pi");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_AhtBY");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_BhtBY");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_CCQEPauliSupViaKF");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_CV1uBY");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_CV2uBY");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_EtaNCEL");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_MaNCEL");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_MaRES");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_MvRES");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_NormDISCC");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_NormNCRES");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_RDecBR1gamma");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_Rvn1pi");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_Rvn2pi");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_Rvn3pi");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_Rvp1pi");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_Rvp2pi");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_Theta_Delta2Npi");
-    mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-        "GENIE_VecFFCCQEshape");
+  mnv_plotter.error_summary_group_map.clear();
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrAbs_N");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrAbs_pi");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrCEx_N");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrCEx_pi");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrElas_N");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrElas_pi");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrInel_N");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrPiProd_N");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back(
+      "GENIE_FrPiProd_pi");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_MFP_N");
+  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_MFP_pi");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_AGKYxF1pi");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_AhtBY");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_BhtBY");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_CCQEPauliSupViaKF");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_CV1uBY");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_CV2uBY");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_EtaNCEL");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_MaNCEL");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_MaRES");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_MvRES");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_NormDISCC");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_NormNCRES");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_RDecBR1gamma");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_Rvn1pi");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_Rvn2pi");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_Rvn3pi");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_Rvp1pi");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_Rvp2pi");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_Theta_Delta2Npi");
+  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
+      "GENIE_VecFFCCQEshape");
 
-    mnv_plotter.error_summary_group_map["RPA"].push_back("RPA_HighQ2");
-    mnv_plotter.error_summary_group_map["RPA"].push_back("RPA_LowQ2");
+  mnv_plotter.error_summary_group_map["RPA"].push_back("RPA_HighQ2");
+  mnv_plotter.error_summary_group_map["RPA"].push_back("RPA_LowQ2");
 
   const bool do_fractional_uncertainty = true;
   const bool do_cov_area_norm = false;
@@ -154,7 +145,8 @@ void PlotErrorSummary(PlotUtils::MnvH1D* h, std::string label) {
   mnv_plotter.MultiPrint(&cE, plotname, "png");
 }
 
-void PlotCVAndError(PlotUtils::MnvH1D* h, std::string label) {
+void PlotCVAndError(PlotUtils::MnvH1D* h, std::string label)
+{
   PlotUtils::MnvH1D* hist = (PlotUtils::MnvH1D*)h->Clone("hist");
   PlotUtils::MnvPlotter mnv_plotter(PlotUtils::kCCNuPionIncStyle);
   TCanvas cE("c1", "c1");
@@ -176,7 +168,6 @@ void PlotCVAndError(PlotUtils::MnvH1D* h, std::string label) {
   delete datahist;
 }
 
-#ifndef __CINT__
 //==============================================================================
 // Loop and Fill
 //==============================================================================
@@ -186,20 +177,21 @@ void LoopAndFillEventSelection(
     std::vector<Variable*> vars,
     std::vector<Study*> studies,
     PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
-    //util::Categorized<PlotUtils::HistWrapper<CVUniverse>, int> hw_bestpirange) //,PlotUtils::HistWrapper<CVUniverse> hw_emu)
-    {
-    for (int i=0; i<chain->GetEntries(); ++i) {
+{
+  for (int i=0; i<chain->GetEntries(); ++i)
+  {
     if(i%1000==0) std::cout << (i/1000) << "k " << std::flush;
-
 
     int isSignal = 0;
     
     //=========================================
     // Systematics loop(s)
     //=========================================
-    for (auto band : error_bands) {
+    for (auto band : error_bands)
+    {
       std::vector<CVUniverse*> error_band_universes = band.second;
-      for (auto universe : error_band_universes) {
+      for (auto universe : error_band_universes)
+      {
          MichelEvent myevent; // make sure your event is inside the error band loop. 
     
         // Tell the Event which entry in the TChain it's looking at
@@ -207,38 +199,23 @@ void LoopAndFillEventSelection(
         
         // THis is where you would Access/create a Michel
 
-          //std::cout << "Best Michel Distance is " << min_dist << std::endl;
-          
-          if (!michelcuts.isMCSelected(*universe, myevent, 1).all()) continue; //all is another function that will later help me with sidebands
-
-          //For each Variable
-          //if(best_michel != -1) //Equivalent to if (return_michels.size() == 0) continue;
+        //std::cout << "Best Michel Distance is " << min_dist << std::endl;
         
-          for(auto& var: vars)
-          {
-            for(auto& study: studies) study->SelectedSignal(*universe, myevent, 1); //TODO: Last argument is weight
-            //TODO: #include "study.h"
+        if (!michelcuts.isMCSelected(*universe, myevent, 1).all()) continue; //all is another function that will later help me with sidebands
 
-            //#include "MichelEventStudy.h"	
-	    (*var->m_bestPionByGENIELabel)[universe->GetInteractionType()].FillUniverse(universe, var->GetRecoValue(*universe, myevent.m_idx), universe->GetWeight());
+        //For each Variable
+        //if(best_michel != -1) //Equivalent to if (return_michels.size() == 0) continue;
+      
+        for(auto& var: vars)
+        {
+          for(auto& study: studies) study->SelectedSignal(*universe, myevent, 1); //TODO: Last argument is weight
+          (*var->m_bestPionByGENIELabel)[universe->GetInteractionType()].FillUniverse(universe, var->GetRecoValue(*universe, myevent.m_idx), universe->GetWeight());
 
-            //Fill other per-Variable histograms here
-            
-          }
+          //Fill other per-Variable histograms here
           
-        //=========================================
-        // Cuts in each universe
-        //=========================================
-        //if(PassesCuts(*universe)) {
-        //  hw_emu.univHist(universe)->Fill(universe->GetEmu(), 
-                                        //  universe->GetWeight());
-          
-        //} // End if passed cuts
+        }
       } // End band's universe loop
     } // End Band loop
-    
-    //if (isSignal == 1) std::cout << "THIS EVENT HAS A SIGNAL MICHEL " << std::endl;
-
   } //End entries loop
 }
 
@@ -250,19 +227,19 @@ void LoopAndFillData( PlotUtils::ChainWrapper* data,
 				PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
 
 {
-      for (auto universe : data_band) {
-   		for (int i=0; i<data->GetEntries(); ++i) {
-     			universe->SetEntry(i);
-     			if(i%1000==0) std::cout << (i/1000) << "k " << std::flush;
-     			MichelEvent myevent; 
-     			if (!michelcuts.isDataSelected(*universe, myevent).all()) continue;
-     			for(auto& study: studies) study->Selected(*universe, myevent, 1); 
-                        for(auto& var: vars)
-     			{
-        			(var->dataHist)->FillUniverse(universe, var->GetRecoValue(*universe, myevent.m_idx), 1);
-     			}
-   		}
+  for (auto universe : data_band) {
+    for (int i=0; i<data->GetEntries(); ++i) {
+      universe->SetEntry(i);
+      if(i%1000==0) std::cout << (i/1000) << "k " << std::flush;
+      MichelEvent myevent; 
+      if (!michelcuts.isDataSelected(*universe, myevent).all()) continue;
+      for(auto& study: studies) study->Selected(*universe, myevent, 1); 
+      for(auto& var: vars)
+      {
+        (var->dataHist)->FillUniverse(universe, var->GetRecoValue(*universe, myevent.m_idx), 1);
       }
+    }
+  }
 }
 
 
@@ -272,42 +249,34 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
     				std::vector<Variable*> vars,
     				PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
 {
-    for (int i=0; i<truth->GetEntries(); ++i) {
-      if(i%1000==0) std::cout << (i/1000) << "k " << std::flush;
+  for (int i=0; i<truth->GetEntries(); ++i)
+  {
+    if(i%1000==0) std::cout << (i/1000) << "k " << std::flush;
 
+    //=========================================
+    // Systematics loop(s)
+    //=========================================
+    for (auto band : truth_bands)
+    {
+      std::vector<CVUniverse*> truth_band_universes = band.second;
+      for (auto universe : truth_band_universes)
+      {
+        // Tell the Event which entry in the TChain it's looking at
+        universe->SetEntry(i);
 
-      
-      //=========================================
-      // Systematics loop(s)
-      //=========================================
-      for (auto band : truth_bands) {
-        std::vector<CVUniverse*> truth_band_universes = band.second;
-        for (auto universe : truth_band_universes) {
-      
-          // Tell the Event which entry in the TChain it's looking at
-          universe->SetEntry(i);
-
-          if (!michelcuts.isEfficiencyDenom(*universe, 1)) continue; 
-          //Fill efficiency denominator now: 
-          //TODO ADD PLOTS
-	  
-          
-
-	}
-
+        if (!michelcuts.isEfficiencyDenom(*universe, 1)) continue; 
+        //Fill efficiency denominator now: 
+        //TODO ADD PLOTS
       }
-
     }
+  }
 }
 
-
-
-
-#endif // __CINT__
 //==============================================================================
 // Main
 //==============================================================================
-void testEventLoop() {
+int main(const int /*argc*/, const char** /*argv*/)
+{
   TH1::AddDirectory(false);
   // Make a chain of events
   PlotUtils::ChainWrapper* chain = makeChainWrapperPtr("playlist_mc.txt", 
@@ -336,22 +305,12 @@ void testEventLoop() {
   std::map< std::string, std::vector<CVUniverse*> > truth_bands =
       GetStandardSystematics(truth);
 
-  //ExclusiveVariable1Arg<CVUniverse, Variable> is there to forward a Michel index
-  //to CVUniverse::GetPionKE().  It derives from Variable and thus has the
-  //histogram(s) you want to fill.
-  //std::vector<Variable*> vars = { 
-  //new ExclusiveVariable1Arg<CVUniverse, Variable>("tpi", "T#pi [MeV]", 100, 0., 1., &CVUniverse::GetPionKE, &CVUniverse::GetPionKE)
-  //};
-
-
- 
   std::vector<Variable*> vars = {
   new Variable("tpi", "T#pi [MeV]", 100, 0., .5, &CVUniverse::GetLowTpi, &CVUniverse::GetLowTpi),
   new Variable("q3", "q3 (GeV)", 100, 0.0, 1.3, &CVUniverse::Getq3, &CVUniverse::Getq3)
   };
   std::vector<Study*> studies;
 
-  #ifndef __CINT__
   std::function<double(const CVUniverse&, const MichelEvent&, const int)> oneVar = [](const CVUniverse& univ, const MichelEvent& evt, const int whichMichel)
                                  {
                                    return evt.m_nmichels[whichMichel]->Best3Ddist;
@@ -391,15 +350,6 @@ void testEventLoop() {
   studies.push_back(new PerMichelVarByGENIELabel(delta_t, "Michel Time Diff", "#mus", 30, 0.0, 9.0, error_bands));
   studies.push_back(new PerMichelEventVarByGENIELabel(bestdistvar, "Best Distance", "mm", 100, 0., 1000., error_bands));
 
-  //vars.push_back( new Variable("tpi", "T#pi [MeV]", 100, 0., 1., bestdistvar, bestdistvar));
-  //std::vector<Variable*> vars = {
-  //new ExclusiveVariable1Arg<CVUniverse, Variable>("tpi", "T#pi [MeV]", 100, 0., 1., low_tpi, low_tpi)
-  //};
-  #endif //__CINT__
-
-  //new ExclusiveVariable1Arg<CVUniverse, Variable>("pionrange", 100, 0., 2400, &Michel::Best3Ddist, &CVUniverse::Best3Ddist)
-  
-  //using namespace PlotUtils;
   //Creating the single Data universe 
   PlotUtils::MacroUtil util(reco_tree_name, mc_file_list, data_file_list,
                     plist_string, do_truth, is_grid);
@@ -408,7 +358,6 @@ void testEventLoop() {
   std::map<std::string, std::vector<CVUniverse*> > data_error_bands;
   data_error_bands["cv_data"] = data_band;
   
-  #ifndef __CINT__
   std::vector<Study*> data_studies;
   // data_studies.push_back(new CreateDataHistPerMichel(oneVar, "Best Distance", "mm", 100, 0, 1000., data_band));
   // data_studies.push_back(new CreateDataHistPerMichel(michelE, "Michel energy", "MeV", 20, 0., 100., data_band));
@@ -419,8 +368,6 @@ void testEventLoop() {
   data_studies.push_back(new PerMichelVarByGENIELabel(michelE, "Michel energy", "MeV", 20, 0., 100., data_error_bands));
   data_studies.push_back(new PerMichelVarByGENIELabel(delta_t, "Michel Time Diff", "#mus", 30, 0.0, 9.0, data_error_bands));
   data_studies.push_back(new PerMichelEventVarByGENIELabel(bestdistvar, "Best Distance", "mm", 100, 0., 1000., data_error_bands));
-   #endif //__CINT__
-
 
   for(auto& var: vars) var->InitializeMCHists(error_bands);
   for(auto& var: vars) var->InitializeDATAHists(data_band);
@@ -432,15 +379,13 @@ void testEventLoop() {
   auto signalDefinition = truth::GetCCInclusive2DSignal<CVUniverse>();
   signalDefinition.emplace_back(new Q3Limit<CVUniverse>(1.2));
 
-
-
   PlotUtils::Cutter<CVUniverse, MichelEvent> mycuts(std::move(precuts), std::move(sidebands) , std::move(signalDefinition),std::move(truth::GetCCInclusive2DPhaseSpace<CVUniverse>()));
   // Loop entries and fill
   LoopAndFillEventSelection(chain, error_bands, vars, studies, mycuts);
   LoopAndFillEffDenom(truth, truth_bands, vars, mycuts);
   TFile* outDir = TFile::Open("OutputMichelHists.root", "RECREATE");
   LoopAndFillData(data, data_band,vars, data_studies, mycuts);
-  #ifndef __CINT__ //For "auto" c++11 feature because Andrew is lazy.  Added some lambda function action later.
+
   for(auto& var: vars)
   {
     // You must always sync your HistWrappers before plotting them
@@ -454,7 +399,6 @@ void testEventLoop() {
                                        });
    //var->Write(*outDir); 
   }
-  #endif //__CINT__
 
   //TFile* outDir = TFile::Open("PerMichelHists.root", "RECREATE");
   for(auto& study: studies) study->SaveOrDraw(*outDir);
@@ -465,18 +409,3 @@ void testEventLoop() {
   std::cout << mycuts << std::endl; 
   std::cout << "Success" << std::endl;
 }
-/*
-void CreateMichels(CVUnivere &univ,std::vector<Michel*> &return_michels){
-  unsigned int nmichels = univ->GetNMichels();
-  for (unsigned int i = 0; i < nmichels; ++i)
-  {
-    Michel* current_michel = new Michel(univ, i);
-    if (current_michel->is_fitted != 1) continue;
-    current_michel->DoesMichelMatchVtx(univ, current_michel);
-    current_michel->DoesMichelMatchClus(univ, current_michel);
-    return_michels.push_back(current_michel);
-  }
-  return return_michels;
-}
-
-*/

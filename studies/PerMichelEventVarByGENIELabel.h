@@ -2,9 +2,9 @@
 #include "studies/Study.h"
 
 //Mehreen's includes
-#include "MichelEvent.h"
-#include "Categorized.h"
-#include "CVUniverse.h"
+#include "event/MichelEvent.h"
+#include "util/Categorized.h"
+#include "event/CVUniverse.h"
 
 //c++ includes
 #include <functional> //for std::function

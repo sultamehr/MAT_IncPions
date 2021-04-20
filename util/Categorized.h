@@ -10,7 +10,7 @@
 #define UTIL_CATEGORIZED_CPP
 
 //Local includes
-#include "SafeROOTName.h"
+#include "util/SafeROOTName.h"
 
 //c++ includes
 #include <string>

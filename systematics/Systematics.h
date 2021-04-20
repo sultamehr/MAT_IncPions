@@ -5,7 +5,7 @@
 // Get Several standard MINERvA systematics
 //==============================================================================
 
-#include "CVUniverse.h"
+#include "event/CVUniverse.h"
 #include "PlotUtils/FluxSystematics.h"
 #include "PlotUtils/GenieSystematics.h"
 #include "PlotUtils/MinosEfficiencySystematics.h"

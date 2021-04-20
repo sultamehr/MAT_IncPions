@@ -1,13 +1,13 @@
 //studies includes
 #include "studies/Study.h"
 #ifndef __CINT__ //PlotUtils/VariableBase.h uses std::function which is from c++11
-#include "SafeROOTName.cpp" //TODO: This is a very bad idea
+#include "util/SafeROOTName.h"
 #endif //__CINT__
 
 //Mehreen's includes
-#include "MichelEvent.h"
-#include "Categorized.h"
-#include "CVUniverse.h"
+#include "event/MichelEvent.h"
+#include "util/Categorized.h"
+#include "event/CVUniverse.h"
 #include "PlotUtils/VariableBase.h"
 //c++ includes
 #include <functional> //for std::function

@@ -2,10 +2,10 @@
 #define VARIABLE_H
 
 #ifndef __CINT__ //PlotUtils/VariableBase.h uses std::function which is from c++11
-#include "SafeROOTName.cpp" //TODO: This is a very bad idea
+#include "util/SafeROOTName.h"
 #endif //__CINT__
 #include "PlotUtils/VariableBase.h"
-#include "Categorized.h"
+#include "util/Categorized.h"
 namespace dont
 {
   //For example only.  Don't actually use GENIELabels as your backgrounds!

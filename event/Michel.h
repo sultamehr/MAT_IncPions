@@ -2,10 +2,10 @@
 #define MICHEL_H
 
 
-#include "CVUniverse.h"
+#include "event/CVUniverse.h"
 
 
-#include "Cluster.h"
+#include "event/Cluster.h"
 // A michel object is defined by a cluster of hits AND by the vertex to which
 // it is matched.
 //
