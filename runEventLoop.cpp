@@ -192,24 +192,28 @@ void LoopAndFillEventSelection(
       std::vector<CVUniverse*> error_band_universes = band.second;
       for (auto universe : error_band_universes)
       {
-         MichelEvent myevent; // make sure your event is inside the error band loop. 
+        MichelEvent myevent; // make sure your event is inside the error band loop. 
     
         // Tell the Event which entry in the TChain it's looking at
         universe->SetEntry(i);
         
         // THis is where you would Access/create a Michel
 
-        //std::cout << "Best Michel Distance is " << min_dist << std::endl;
-        
-        if (!michelcuts.isMCSelected(*universe, myevent, 1).all()) continue; //all is another function that will later help me with sidebands
+        const double weight = 1; //TODO: MnvTunev1
 
-        //For each Variable
-        //if(best_michel != -1) //Equivalent to if (return_michels.size() == 0) continue;
-      
+        if (!michelcuts.isMCSelected(*universe, myevent, weight).all()) continue; //all is another function that will later help me with sidebands
+        const bool isSignal = michelcuts.isSignal(*universe, weight);
+
         for(auto& var: vars)
         {
-          for(auto& study: studies) study->SelectedSignal(*universe, myevent, 1); //TODO: Last argument is weight
+          for(auto& study: studies) study->SelectedSignal(*universe, myevent, weight);
           (*var->m_bestPionByGENIELabel)[universe->GetInteractionType()].FillUniverse(universe, var->GetRecoValue(*universe, myevent.m_idx), universe->GetWeight());
+
+          //Cross section components
+          if(isSignal)
+          {
+            var->efficiencyNumerator->FillUniverse(universe, var->GetTrueValue(*universe), weight);
+          }
 
           //Fill other per-Variable histograms here
           
@@ -264,9 +268,14 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
         // Tell the Event which entry in the TChain it's looking at
         universe->SetEntry(i);
 
-        if (!michelcuts.isEfficiencyDenom(*universe, 1)) continue; 
+        const double weight = 1; //TODO: MnvTunev1
+        if (!michelcuts.isEfficiencyDenom(*universe, weight)) continue; 
+
         //Fill efficiency denominator now: 
-        //TODO ADD PLOTS
+        for(auto var: vars)
+        {
+          var->efficiencyDenominator->FillUniverse(universe, var->GetTrueValue(*universe), weight);
+        }
       }
     }
   }
@@ -373,9 +382,9 @@ int main(const int /*argc*/, const char** /*argv*/)
   for(auto& var: vars) var->InitializeDATAHists(data_band);
   PlotUtils::Cutter<CVUniverse, MichelEvent>::reco_t sidebands;
   auto precuts = reco::GetCCInclusive2DCuts<CVUniverse, MichelEvent>();
-  precuts.emplace_back(new Q3RangeReco<CVUniverse, MichelEvent>(0.0, 1.20));
+  /*precuts.emplace_back(new Q3RangeReco<CVUniverse, MichelEvent>(0.0, 1.20));
   precuts.emplace_back(new hasMichel<CVUniverse, MichelEvent>());
-  precuts.emplace_back(new BestMichelDistance2D<CVUniverse, MichelEvent>(102.));
+  precuts.emplace_back(new BestMichelDistance2D<CVUniverse, MichelEvent>(102.));*/
   auto signalDefinition = truth::GetCCInclusive2DSignal<CVUniverse>();
   signalDefinition.emplace_back(new Q3Limit<CVUniverse>(1.2));
 

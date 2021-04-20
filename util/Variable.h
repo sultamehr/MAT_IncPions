@@ -1,37 +1,21 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
 
-#ifndef __CINT__ //PlotUtils/VariableBase.h uses std::function which is from c++11
 #include "util/SafeROOTName.h"
-#endif //__CINT__
 #include "PlotUtils/VariableBase.h"
 #include "util/Categorized.h"
-namespace dont
-{
-  //For example only.  Don't actually use GENIELabels as your backgrounds!
-  //You'd end up with a very model-dependent result, and Luke Pickering
-  //would frown on your paper ;)
-  std::map<int, std::string> GENIELabels = {{1, "QE"},
-                                            {8, "2p2h"},
-                                            {2, "RES"},
-                                            {3, "DIS"}};
-}
 
 class Variable: public PlotUtils::VariableBase<CVUniverse>
 {
   private:
     typedef PlotUtils::HistWrapper<CVUniverse> Hist;
   public:
-    #ifndef __CINT__ //For variadic template parameter ARGS
     template <class ...ARGS>
     Variable(ARGS... args): PlotUtils::VariableBase<CVUniverse>(args...)
     {
     }
 
-    #endif //__CINT__
-    //Very dissappointed in Ben for not allowing me to pass universes to the constructor.
-    //This is not a solution I like :(
-    void InitializeMCHists(const std::map<std::string, std::vector<CVUniverse*>>& error_bands)
+    void InitializeMCHists(std::map<std::string, std::vector<CVUniverse*>>& error_bands)
     {
       //For example only.  Don't actually use GENIELabels as your backgrounds!
       //You'd end up with a very model-dependent result, and Luke Pickering
@@ -44,16 +28,21 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
       m_bestPionByGENIELabel = new util::Categorized<Hist, int>((GetName() + "_by_GENIE_Label").c_str(),
                                                                 GetName(), GENIELabels,
                                                                 GetNBins(), GetBinVec(), error_bands);
+
+      efficiencyNumerator = new Hist((GetName() + "_efficiency_numerator").c_str(), GetName().c_str(), GetNBins(), GetBinVec(), error_bands);
+      efficiencyDenominator = new Hist((GetName() + "_efficiency_denominator").c_str(), GetName().c_str(), GetNBins(), GetBinVec(), error_bands);
     }
-    #ifndef __CINT__
+
+    //Histograms to be filled
     util::Categorized<Hist, int>* m_bestPionByGENIELabel;
-    #endif //__CINT__
     Hist* dataHist;  
+    Hist* efficiencyNumerator;
+    Hist* efficiencyDenominator;
+
     void InitializeDATAHists(std::vector<CVUniverse*>& data_error_bands)
     {
 	std::vector<double> bins = GetBinVec();
         const char* name = GetName().c_str();
-        //dataHist = new Hist(Form("_data_%s", name), name, GetNBins(), bins, universe);
   	dataHist = new Hist(Form("_data_%s", name), name, GetNBins(), bins, data_error_bands);
  
     }
@@ -64,7 +53,6 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
 
       file.cd();
 
-      #ifndef __CINT__ //For labmda function [](auto& categ){}
       m_bestPionByGENIELabel->visit([&file](Hist& categ)
                                     {
                                       categ.hist->SetDirectory(&file);
@@ -75,7 +63,18 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
 		dataHist->hist->SetDirectory(&file);
 		dataHist->hist->Write();
       }
-      #endif //__CINT__
+
+      if(efficiencyNumerator)
+      {
+        efficiencyNumerator->hist->SetDirectory(&file); //TODO: Can I get around having to call SetDirectory() this many times somehow?
+        efficiencyNumerator->hist->Write();
+      }
+
+      if(efficiencyDenominator)
+      {
+        efficiencyDenominator->hist->SetDirectory(&file);
+        efficiencyDenominator->hist->Write();
+      }
     }
 
     //Only call this manually if you Draw(), Add(), or Divide() plots in this
@@ -84,18 +83,11 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
     //Framework, this was implicitly done by the event loop.
     void SyncCVHistos()
     {
-      #ifndef __CINT__ //For labmda function [](auto& categ){}
       m_bestPionByGENIELabel->visit([](Hist& categ) { categ.SyncCVHistos(); });
-      dataHist->SyncCVHistos();
-      #endif //__CINT__
+      if(dataHist) dataHist->SyncCVHistos();
+      if(efficiencyNumerator) efficiencyNumerator->SyncCVHistos();
+      if(efficiencyDenominator) efficiencyDenominator->SyncCVHistos();
     }
-
-//Write a destructor
-//  ~Variable()
-//  {
-//    delete dataHist;
-//    dataHist = NULL;
-//   }
 };
 
 #endif //VARIABLE_H
