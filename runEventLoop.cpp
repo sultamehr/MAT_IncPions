@@ -279,14 +279,14 @@ int main(const int /*argc*/, const char** /*argv*/)
 {
   TH1::AddDirectory(false);
   // Make a chain of events
-  PlotUtils::ChainWrapper* chain = makeChainWrapperPtr("playlist_mc.txt", 
+  PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(INSTALL_DIR "/etc/playlists/playlist_mc.txt", 
                                                        "CCQENu");
-  PlotUtils::ChainWrapper* truth = makeChainWrapperPtr("playlist_mc.txt",
+  PlotUtils::ChainWrapper* truth = makeChainWrapperPtr(INSTALL_DIR "/etc/playlists/playlist_mc.txt",
 						       "Truth");
-  PlotUtils::ChainWrapper* data = makeChainWrapperPtr("playlist_data.txt",
+  PlotUtils::ChainWrapper* data = makeChainWrapperPtr(INSTALL_DIR "/etc/playlists/playlist_data.txt",
 						      "CCQENu");
-  const std::string mc_file_list("playlist_mc.txt");
-  const std::string data_file_list("playlist_data.txt");
+  const std::string mc_file_list(INSTALL_DIR "/etc/playlists/playlist_mc.txt");
+  const std::string data_file_list(INSTALL_DIR "/etc/playlists/playlist_data.txt");
   const std::string plist_string("minervame1a");
   const std::string reco_tree_name("CCQENu");
   const bool do_truth = false;
