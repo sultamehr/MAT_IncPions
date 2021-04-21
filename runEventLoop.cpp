@@ -178,12 +178,11 @@ void LoopAndFillEventSelection(
     std::vector<Study*> studies,
     PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
 {
+  std::cout << "Starting MC reco loop...\n";
   for (int i=0; i<chain->GetEntries(); ++i)
   {
-    if(i%1000==0) std::cout << (i/1000) << "k " << std::flush;
+    if(i%1000==0) std::cout << (i/1000) << "k\n" << std::flush;
 
-    int isSignal = 0;
-    
     //=========================================
     // Systematics loop(s)
     //=========================================
@@ -199,7 +198,7 @@ void LoopAndFillEventSelection(
         
         // THis is where you would Access/create a Michel
 
-        const double weight = 1; //TODO: MnvTunev1
+        const double weight = universe->GetWeight(); //TODO: Model/Reweighter
 
         if (!michelcuts.isMCSelected(*universe, myevent, weight).all()) continue; //all is another function that will later help me with sidebands
         const bool isSignal = michelcuts.isSignal(*universe, weight);
@@ -221,6 +220,7 @@ void LoopAndFillEventSelection(
       } // End band's universe loop
     } // End Band loop
   } //End entries loop
+  std::cout << "Finished MC reco loop.\n";
 }
 
 
@@ -231,10 +231,11 @@ void LoopAndFillData( PlotUtils::ChainWrapper* data,
 				PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
 
 {
+  std::cout << "Starting data loop...\n";
   for (auto universe : data_band) {
     for (int i=0; i<data->GetEntries(); ++i) {
       universe->SetEntry(i);
-      if(i%1000==0) std::cout << (i/1000) << "k " << std::flush;
+      if(i%1000==0) std::cout << (i/1000) << "k\n" << std::flush;
       MichelEvent myevent; 
       if (!michelcuts.isDataSelected(*universe, myevent).all()) continue;
       for(auto& study: studies) study->Selected(*universe, myevent, 1); 
@@ -244,6 +245,7 @@ void LoopAndFillData( PlotUtils::ChainWrapper* data,
       }
     }
   }
+  std::cout << "Finished data loop.\n";
 }
 
 
@@ -253,9 +255,10 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
     				std::vector<Variable*> vars,
     				PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
 {
+  std::cout << "Starting efficiency denominator loop...\n";
   for (int i=0; i<truth->GetEntries(); ++i)
   {
-    if(i%1000==0) std::cout << (i/1000) << "k " << std::flush;
+    if(i%1000==0) std::cout << (i/1000) << "k\n" << std::flush;
 
     //=========================================
     // Systematics loop(s)
@@ -268,7 +271,7 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
         // Tell the Event which entry in the TChain it's looking at
         universe->SetEntry(i);
 
-        const double weight = 1; //TODO: MnvTunev1
+        const double weight = universe->GetWeight(); //TODO: Model/Reweighter
         if (!michelcuts.isEfficiencyDenom(*universe, weight)) continue; 
 
         //Fill efficiency denominator now: 
@@ -279,6 +282,7 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
       }
     }
   }
+  std::cout << "Finished efficiency denominator loop.\n";
 }
 
 //==============================================================================
@@ -287,6 +291,7 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
 int main(const int /*argc*/, const char** /*argv*/)
 {
   TH1::AddDirectory(false);
+
   // Make a chain of events
   PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(INSTALL_DIR "/etc/playlists/playlist_mc.txt", 
                                                        "CCQENu");
@@ -308,58 +313,15 @@ int main(const int /*argc*/, const char** /*argv*/)
   PlotUtils::MinervaUniverse::SetDeuteriumGeniePiTune(false);
 
   // Make a map of systematic universes
-  std::map< std::string, std::vector<CVUniverse*> > error_bands = 
-      GetStandardSystematics(chain);
-
-  std::map< std::string, std::vector<CVUniverse*> > truth_bands =
-      error_bands; //GetStandardSystematics(truth);
+  std::map< std::string, std::vector<CVUniverse*> > error_bands = GetStandardSystematics(chain);
+  std::map< std::string, std::vector<CVUniverse*> > truth_bands = GetStandardSystematics(truth);
 
   //TODO: pT, pz?
   std::vector<Variable*> vars = {
-  new Variable("pTmu", "p_{T, #mu} [GeV/c]", 30, 0, 4.5, &CVUniverse::GetMuonPT, &CVUniverse::GetMuonPTTrue)
-  /*new Variable("tpi", "T#pi [MeV]", 100, 0., .5, &CVUniverse::GetLowTpi, &CVUniverse::GetLowTpi),
-  new Variable("q3", "q3 (GeV)", 100, 0.0, 1.3, &CVUniverse::Getq3, &CVUniverse::Getq3)*/
+    new Variable("pTmu", "p_{T, #mu} [GeV/c]", 30, 0, 4.5, &CVUniverse::GetMuonPT, &CVUniverse::GetMuonPTTrue)
   };
+
   std::vector<Study*> studies;
-
-  /*std::function<double(const CVUniverse&, const MichelEvent&, const int)> oneVar = [](const CVUniverse& univ, const MichelEvent& evt, const int whichMichel)
-                                 {
-                                   return evt.m_nmichels[whichMichel]->Best3Ddist;
-                                 };
-  std::function<double(const CVUniverse&, const MichelEvent&, const int)> michelE = [](const CVUniverse& univ, const MichelEvent& evt, const int whichMichel)
-                                 {
-                                   return evt.m_nmichels[whichMichel]->energy;
-                                 };
-  std::function<double(const CVUniverse&, const MichelEvent&, const int)> delta_t = [](const CVUniverse& univ, const MichelEvent& evt, const int whichMichel)
-				 {
-                                   double micheltime = evt.m_nmichels[whichMichel]->time;
-                                   double vtxtime = univ.GetVertex().t();
-                                   double deltat = (micheltime - vtxtime/1000.); //hopefully this is in microseconds (mus)
-				   return deltat;
-				 };
-
-  std::function<double(const CVUniverse&)> low_tpi = [](const CVUniverse& univ)
-				{
-				   double lowesttpi = 9999.;
-                                   int nFSpi = univ.GetNTruePions();
-                                   for (int i = 0; i < nFSpi; i++){
-         			       int pdg = univ.GetPionPDG(i);
-				       int trackid = univ.GetPionParentID(i);
-				       if (trackid != 0 ) continue;
-  				       if (pdg != 211) continue;
- 				       double pionKE = univ.GetPionKE(i);
-                                       if (lowesttpi > pionKE) lowesttpi = pionKE;
-				   }
-                                   return lowesttpi;
-				};
-  std::function<double(const CVUniverse&, const MichelEvent&)> bestdistvar = [](const CVUniverse& univ, const MichelEvent& evt)
-                                 {
-                                   return evt.m_bestdist;
-                                 }; 
-  studies.push_back(new PerMichelVarByGENIELabel(oneVar, "Best Distance", "mm", 100, 0., 1000., error_bands));
-  studies.push_back(new PerMichelVarByGENIELabel(michelE, "Michel energy", "MeV", 20, 0., 100., error_bands));
-  studies.push_back(new PerMichelVarByGENIELabel(delta_t, "Michel Time Diff", "#mus", 30, 0.0, 9.0, error_bands));
-  studies.push_back(new PerMichelEventVarByGENIELabel(bestdistvar, "Best Distance", "mm", 100, 0., 1000., error_bands));*/
 
   //Creating the single Data universe 
   PlotUtils::MacroUtil util(reco_tree_name, mc_file_list, data_file_list,
@@ -370,32 +332,27 @@ int main(const int /*argc*/, const char** /*argv*/)
   data_error_bands["cv_data"] = data_band;
   
   std::vector<Study*> data_studies;
-  // data_studies.push_back(new CreateDataHistPerMichel(oneVar, "Best Distance", "mm", 100, 0, 1000., data_band));
-  // data_studies.push_back(new CreateDataHistPerMichel(michelE, "Michel energy", "MeV", 20, 0., 100., data_band));
-  // data_studies.push_back(new CreateDataHistPerMichel(delta_t, "Michel Time Diff", "#mus", 30, 0.0, 9.0, data_band));
-  // data_studies.push_back(new CreateDataHistPerMichelEvent(bestdistvar, "Best Distance", "mm", 100, 0, 1000., data_band));
-   
-  /*data_studies.push_back(new PerMichelVarByGENIELabel(oneVar, "Best Distance", "mm", 100, 0., 1000., data_error_bands));
-  data_studies.push_back(new PerMichelVarByGENIELabel(michelE, "Michel energy", "MeV", 20, 0., 100., data_error_bands));
-  data_studies.push_back(new PerMichelVarByGENIELabel(delta_t, "Michel Time Diff", "#mus", 30, 0.0, 9.0, data_error_bands));
-  data_studies.push_back(new PerMichelEventVarByGENIELabel(bestdistvar, "Best Distance", "mm", 100, 0., 1000., data_error_bands));*/
 
-  for(auto& var: vars) var->InitializeMCHists(error_bands);
+  for(auto& var: vars) var->InitializeMCHists(error_bands, truth_bands);
   for(auto& var: vars) var->InitializeDATAHists(data_band);
+
   PlotUtils::Cutter<CVUniverse, MichelEvent>::reco_t sidebands;
   auto precuts = reco::GetCCInclusive2DCuts<CVUniverse, MichelEvent>();
-  /*precuts.emplace_back(new Q3RangeReco<CVUniverse, MichelEvent>(0.0, 1.20));
-  precuts.emplace_back(new hasMichel<CVUniverse, MichelEvent>());
-  precuts.emplace_back(new BestMichelDistance2D<CVUniverse, MichelEvent>(102.));*/
   auto signalDefinition = truth::GetCCInclusive2DSignal<CVUniverse>();
-  //signalDefinition.emplace_back(new Q3Limit<CVUniverse>(1.2));
 
   PlotUtils::Cutter<CVUniverse, MichelEvent> mycuts(std::move(precuts), std::move(sidebands) , std::move(signalDefinition),std::move(truth::GetCCInclusive2DPhaseSpace<CVUniverse>()));
+
   // Loop entries and fill
   LoopAndFillEventSelection(chain, error_bands, vars, studies, mycuts);
+  CVUniverse::SetTruth(true);
   LoopAndFillEffDenom(truth, truth_bands, vars, mycuts);
+  std::cout << "MC cut summary:\n" << mycuts << "\n";
+  mycuts.resetStats();
+
+  CVUniverse::SetTruth(false);
   TFile* outDir = TFile::Open("OutputMichelHists.root", "RECREATE");
   LoopAndFillData(data, data_band,vars, data_studies, mycuts);
+  std::cout << "Data cut summary:\n" << mycuts << "\n";
 
   for(auto& var: vars)
   {
@@ -408,15 +365,11 @@ int main(const int /*argc*/, const char** /*argv*/)
                                          PlotCVAndError(categ.hist, categ.hist->GetTitle());
                                          PlotErrorSummary(categ.hist, categ.hist->GetTitle());
                                        });
-   //var->Write(*outDir); 
   }
 
-  //TFile* outDir = TFile::Open("PerMichelHists.root", "RECREATE");
   for(auto& study: studies) study->SaveOrDraw(*outDir);
   for(auto& var: vars) var->Write(*outDir);
-  outDir->Write();
   TFile* dataDir = TFile::Open("DataStudyHists.root", "RECREATE");
   for(auto& study: data_studies) study->SaveOrDraw(*dataDir);  
-  std::cout << std::endl << mycuts << std::endl; 
   std::cout << "Success" << std::endl;
 }

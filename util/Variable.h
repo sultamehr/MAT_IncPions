@@ -15,7 +15,10 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
     {
     }
 
-    void InitializeMCHists(std::map<std::string, std::vector<CVUniverse*>>& error_bands)
+    //TODO: It's really silly to have to make 2 sets of error bands just because they point to different trees.
+    //      I'd rather the physics of the error bands remain the same and just change which tree they point to.
+    void InitializeMCHists(std::map<std::string, std::vector<CVUniverse*>>& mc_error_bands,
+                           std::map<std::string, std::vector<CVUniverse*>>& truth_error_bands)
     {
       //For example only.  Don't actually use GENIELabels as your backgrounds!
       //You'd end up with a very model-dependent result, and Luke Pickering
@@ -27,10 +30,10 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
  
       m_bestPionByGENIELabel = new util::Categorized<Hist, int>((GetName() + "_by_GENIE_Label").c_str(),
                                                                 GetName(), GENIELabels,
-                                                                GetNBins(), GetBinVec(), error_bands);
+                                                                GetNBins(), GetBinVec(), mc_error_bands);
 
-      efficiencyNumerator = new Hist((GetName() + "_efficiency_numerator").c_str(), GetName().c_str(), GetNBins(), GetBinVec(), error_bands);
-      efficiencyDenominator = new Hist((GetName() + "_efficiency_denominator").c_str(), GetName().c_str(), GetNBins(), GetBinVec(), error_bands);
+      efficiencyNumerator = new Hist((GetName() + "_efficiency_numerator").c_str(), GetName().c_str(), GetNBins(), GetBinVec(), mc_error_bands);
+      efficiencyDenominator = new Hist((GetName() + "_efficiency_denominator").c_str(), GetName().c_str(), GetNBins(), GetBinVec(), truth_error_bands);
     }
 
     //Histograms to be filled
