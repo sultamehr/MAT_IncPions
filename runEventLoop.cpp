@@ -312,7 +312,7 @@ int main(const int /*argc*/, const char** /*argv*/)
       GetStandardSystematics(chain);
 
   std::map< std::string, std::vector<CVUniverse*> > truth_bands =
-      GetStandardSystematics(truth);
+      error_bands; //GetStandardSystematics(truth);
 
   //TODO: pT, pz?
   std::vector<Variable*> vars = {
@@ -322,7 +322,7 @@ int main(const int /*argc*/, const char** /*argv*/)
   };
   std::vector<Study*> studies;
 
-  std::function<double(const CVUniverse&, const MichelEvent&, const int)> oneVar = [](const CVUniverse& univ, const MichelEvent& evt, const int whichMichel)
+  /*std::function<double(const CVUniverse&, const MichelEvent&, const int)> oneVar = [](const CVUniverse& univ, const MichelEvent& evt, const int whichMichel)
                                  {
                                    return evt.m_nmichels[whichMichel]->Best3Ddist;
                                  };
@@ -359,7 +359,7 @@ int main(const int /*argc*/, const char** /*argv*/)
   studies.push_back(new PerMichelVarByGENIELabel(oneVar, "Best Distance", "mm", 100, 0., 1000., error_bands));
   studies.push_back(new PerMichelVarByGENIELabel(michelE, "Michel energy", "MeV", 20, 0., 100., error_bands));
   studies.push_back(new PerMichelVarByGENIELabel(delta_t, "Michel Time Diff", "#mus", 30, 0.0, 9.0, error_bands));
-  studies.push_back(new PerMichelEventVarByGENIELabel(bestdistvar, "Best Distance", "mm", 100, 0., 1000., error_bands));
+  studies.push_back(new PerMichelEventVarByGENIELabel(bestdistvar, "Best Distance", "mm", 100, 0., 1000., error_bands));*/
 
   //Creating the single Data universe 
   PlotUtils::MacroUtil util(reco_tree_name, mc_file_list, data_file_list,
@@ -375,10 +375,10 @@ int main(const int /*argc*/, const char** /*argv*/)
   // data_studies.push_back(new CreateDataHistPerMichel(delta_t, "Michel Time Diff", "#mus", 30, 0.0, 9.0, data_band));
   // data_studies.push_back(new CreateDataHistPerMichelEvent(bestdistvar, "Best Distance", "mm", 100, 0, 1000., data_band));
    
-  data_studies.push_back(new PerMichelVarByGENIELabel(oneVar, "Best Distance", "mm", 100, 0., 1000., data_error_bands));
+  /*data_studies.push_back(new PerMichelVarByGENIELabel(oneVar, "Best Distance", "mm", 100, 0., 1000., data_error_bands));
   data_studies.push_back(new PerMichelVarByGENIELabel(michelE, "Michel energy", "MeV", 20, 0., 100., data_error_bands));
   data_studies.push_back(new PerMichelVarByGENIELabel(delta_t, "Michel Time Diff", "#mus", 30, 0.0, 9.0, data_error_bands));
-  data_studies.push_back(new PerMichelEventVarByGENIELabel(bestdistvar, "Best Distance", "mm", 100, 0., 1000., data_error_bands));
+  data_studies.push_back(new PerMichelEventVarByGENIELabel(bestdistvar, "Best Distance", "mm", 100, 0., 1000., data_error_bands));*/
 
   for(auto& var: vars) var->InitializeMCHists(error_bands);
   for(auto& var: vars) var->InitializeDATAHists(data_band);
@@ -388,7 +388,7 @@ int main(const int /*argc*/, const char** /*argv*/)
   precuts.emplace_back(new hasMichel<CVUniverse, MichelEvent>());
   precuts.emplace_back(new BestMichelDistance2D<CVUniverse, MichelEvent>(102.));*/
   auto signalDefinition = truth::GetCCInclusive2DSignal<CVUniverse>();
-  signalDefinition.emplace_back(new Q3Limit<CVUniverse>(1.2));
+  //signalDefinition.emplace_back(new Q3Limit<CVUniverse>(1.2));
 
   PlotUtils::Cutter<CVUniverse, MichelEvent> mycuts(std::move(precuts), std::move(sidebands) , std::move(signalDefinition),std::move(truth::GetCCInclusive2DPhaseSpace<CVUniverse>()));
   // Loop entries and fill
