@@ -55,8 +55,8 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
     wgt_rpa = GetRPAWeight();
 
     // MINOS muon tracking efficiency
-    if (!IsTruth() && IsMinosMatchMuon())
-      wgt_mueff = GetMinosEfficiencyWeight();
+    //if (!IsTruth() && IsMinosMatchMuon())
+    wgt_mueff = GetMinosEfficiencyWeight();
 
     return wgt_flux_and_cv * wgt_genie * wgt_2p2h * wgt_rpa * wgt_mueff;
   }
@@ -98,9 +98,19 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
     return GetPmu()/1000. * sin(GetThetamu());
   }
 
+  double GetMuonPz() const //GeV/c
+  {
+    return GetPmu()/1000. * cos(GetThetamu());
+  }
+
   double GetMuonPTTrue() const //GeV/c
   {
     return GetPlepTrue()/1000. * sin(GetThetalepTrue());
+  }
+
+  double GetMuonPzTrue() const //GeV/c
+  {
+    return GetPlepTrue()/1000. * cos(GetThetalepTrue());
   }
 
   int GetInteractionType() const {

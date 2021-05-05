@@ -25,9 +25,11 @@
 
 #include "event/CVUniverse.h"
 #include "systematics/Systematics.h"
+#include "cuts/MaxPzMu.h"
 
 #include "PlotUtils/makeChainWrapper.h"
 #include "PlotUtils/HistWrapper.h"
+#include "PlotUtils/Hist2DWrapper.h"
 #include "PlotUtils/MacroUtil.h"
 #include "PlotUtils/MnvPlotter.h"
 #include "PlotUtils/cuts/CCInclusiveCuts.h"
@@ -35,6 +37,7 @@
 #include "util/Categorized.h"
 #include "PlotUtils/Cutter.h"
 #include "util/Variable.h"
+#include "util/Variable2D.h"
 #include "cuts/BestMichelDistance.h"
 #include "cuts/BestMichelDistance2D.h"
 #include "cuts/SignalDefinition.h"
@@ -52,8 +55,6 @@
 //#include "Binning.h" //TODO: Fix me
 #pragma GCC diagnostic pop
 #include <iostream>
-
-class Variable;
 
 // Histogram binning constants
 const int nbins = 30;
@@ -175,6 +176,7 @@ void LoopAndFillEventSelection(
     PlotUtils::ChainWrapper* chain,
     std::map<std::string, std::vector<CVUniverse*> > error_bands,
     std::vector<Variable*> vars,
+    std::vector<Variable2D*> vars2D,
     std::vector<Study*> studies,
     PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
 {
@@ -203,9 +205,13 @@ void LoopAndFillEventSelection(
         if (!michelcuts.isMCSelected(*universe, myevent, weight).all()) continue; //all is another function that will later help me with sidebands
         const bool isSignal = michelcuts.isSignal(*universe, weight);
 
-        for(auto& var: vars)
+        if(isSignal)
         {
           for(auto& study: studies) study->SelectedSignal(*universe, myevent, weight);
+        }
+
+        for(auto& var: vars)
+        {
           (*var->m_bestPionByGENIELabel)[universe->GetInteractionType()].FillUniverse(universe, var->GetRecoValue(*universe, myevent.m_idx), universe->GetWeight());
 
           //Cross section components
@@ -217,6 +223,14 @@ void LoopAndFillEventSelection(
           //Fill other per-Variable histograms here
           
         }
+
+        for(auto& var: vars2D)
+        {
+          if(isSignal)
+          {
+            var->efficiencyNumerator->FillUniverse(universe, var->GetTrueValueX(*universe), var->GetTrueValueY(*universe), weight);
+          }
+        }
       } // End band's universe loop
     } // End Band loop
   } //End entries loop
@@ -227,6 +241,7 @@ void LoopAndFillEventSelection(
 void LoopAndFillData( PlotUtils::ChainWrapper* data,
 			        std::vector<CVUniverse*> data_band,
 				std::vector<Variable*> vars,
+                                std::vector<Variable2D*> vars2D,
                                 std::vector<Study*> studies,
 				PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
 
@@ -238,10 +253,17 @@ void LoopAndFillData( PlotUtils::ChainWrapper* data,
       if(i%1000==0) std::cout << (i/1000) << "k\n" << std::flush;
       MichelEvent myevent; 
       if (!michelcuts.isDataSelected(*universe, myevent).all()) continue;
+
       for(auto& study: studies) study->Selected(*universe, myevent, 1); 
+
       for(auto& var: vars)
       {
-        (var->dataHist)->FillUniverse(universe, var->GetRecoValue(*universe, myevent.m_idx), 1);
+        var->dataHist->FillUniverse(universe, var->GetRecoValue(*universe, myevent.m_idx), 1);
+      }
+
+      for(auto& var: vars2D)
+      {
+        var->dataHist->FillUniverse(universe, var->GetRecoValueX(*universe), var->GetRecoValueY(*universe), 1);
       }
     }
   }
@@ -253,6 +275,7 @@ void LoopAndFillData( PlotUtils::ChainWrapper* data,
 void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
     				std::map<std::string, std::vector<CVUniverse*> > truth_bands,
     				std::vector<Variable*> vars,
+                                std::vector<Variable2D*> vars2D,
     				PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
 {
   std::cout << "Starting efficiency denominator loop...\n";
@@ -279,6 +302,11 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
         {
           var->efficiencyDenominator->FillUniverse(universe, var->GetTrueValue(*universe), weight);
         }
+
+        for(auto var: vars2D)
+        {
+          var->efficiencyDenominator->FillUniverse(universe, var->GetTrueValueX(*universe), var->GetTrueValueY(*universe), weight);
+        }
       }
     }
   }
@@ -293,32 +321,39 @@ int main(const int /*argc*/, const char** /*argv*/)
   TH1::AddDirectory(false);
 
   // Make a chain of events
-  PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(INSTALL_DIR "/etc/playlists/playlist_mc.txt", 
-                                                       "CCQENu");
-  PlotUtils::ChainWrapper* truth = makeChainWrapperPtr(INSTALL_DIR "/etc/playlists/playlist_mc.txt",
-						       "Truth");
-  PlotUtils::ChainWrapper* data = makeChainWrapperPtr(INSTALL_DIR "/etc/playlists/playlist_data.txt",
-						      "CCQENu");
-  const std::string mc_file_list(INSTALL_DIR "/etc/playlists/playlist_mc.txt");
-  const std::string data_file_list(INSTALL_DIR "/etc/playlists/playlist_data.txt");
+  const std::string mc_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_MC_Inextinguishable_merged.txt"); //"/etc/playlists/playlist_mc.txt");
+  const std::string data_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_DATA_Inextinguishable_merged.txt"); //"/etc/playlists/playlist_data.txt");
+  PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(mc_file_list, "CCQENu");
+  PlotUtils::ChainWrapper* truth = makeChainWrapperPtr(mc_file_list, "Truth");
+  PlotUtils::ChainWrapper* data = makeChainWrapperPtr(data_file_list, "CCQENu");
+
   const std::string plist_string("minervame1a");
   const std::string reco_tree_name("CCQENu");
   const bool do_truth = false;
   const bool is_grid = false;
   // You're required to make some decisions
-  PlotUtils::MinervaUniverse::SetNuEConstraint(false);
+  PlotUtils::MinervaUniverse::SetNuEConstraint(true);
   PlotUtils::MinervaUniverse::SetPlaylist("minervame1A");
   PlotUtils::MinervaUniverse::SetAnalysisNuPDG(14);
-  PlotUtils::MinervaUniverse::SetNonResPiReweight(false);
+  PlotUtils::MinervaUniverse::SetNonResPiReweight(true);
   PlotUtils::MinervaUniverse::SetDeuteriumGeniePiTune(false);
 
   // Make a map of systematic universes
-  std::map< std::string, std::vector<CVUniverse*> > error_bands = GetStandardSystematics(chain);
-  std::map< std::string, std::vector<CVUniverse*> > truth_bands = GetStandardSystematics(truth);
+  std::map< std::string, std::vector<CVUniverse*> > error_bands; //GetStandardSystematics(chain);
+  error_bands["cv"] = {new CVUniverse(chain)};
+  std::map< std::string, std::vector<CVUniverse*> > truth_bands; //GetStandardSystematics(truth);
+  truth_bands["cv"] = {new CVUniverse(truth)};
 
+  std::vector<double> dansPTBins = {0, 0.075, 0.15, 0.25, 0.325, 0.4, 0.475, 0.55, 0.7, 0.85, 1, 1.25, 1.5, 2.5, 4.5},
+                      dansPzBins = {1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 15, 20, 40, 60};
   //TODO: pT, pz?
   std::vector<Variable*> vars = {
-    new Variable("pTmu", "p_{T, #mu} [GeV/c]", 30, 0, 4.5, &CVUniverse::GetMuonPT, &CVUniverse::GetMuonPTTrue)
+    new Variable("pTmu", "p_{T, #mu} [GeV/c]", dansPTBins, &CVUniverse::GetMuonPT, &CVUniverse::GetMuonPTTrue),
+    new Variable("pzmu", "p_{||, #mu} [GeV/c]", dansPzBins, &CVUniverse::GetMuonPz, &CVUniverse::GetMuonPzTrue)
+  };
+
+  std::vector<Variable2D*> vars2D = {
+    new Variable2D(*vars[1], *vars[0])
   };
 
   std::vector<Study*> studies;
@@ -336,22 +371,28 @@ int main(const int /*argc*/, const char** /*argv*/)
   for(auto& var: vars) var->InitializeMCHists(error_bands, truth_bands);
   for(auto& var: vars) var->InitializeDATAHists(data_band);
 
+  for(auto& var: vars2D) var->InitializeMCHists(error_bands, truth_bands);
+  for(auto& var: vars2D) var->InitializeDATAHists(data_band);
+
   PlotUtils::Cutter<CVUniverse, MichelEvent>::reco_t sidebands;
   auto precuts = reco::GetCCInclusive2DCuts<CVUniverse, MichelEvent>();
   auto signalDefinition = truth::GetCCInclusive2DSignal<CVUniverse>();
+  auto phaseSpace = truth::GetCCInclusive2DPhaseSpace<CVUniverse>();
+  phaseSpace.emplace_back(new MaxPzMu<CVUniverse>(60e3));
 
-  PlotUtils::Cutter<CVUniverse, MichelEvent> mycuts(std::move(precuts), std::move(sidebands) , std::move(signalDefinition),std::move(truth::GetCCInclusive2DPhaseSpace<CVUniverse>()));
+  PlotUtils::Cutter<CVUniverse, MichelEvent> mycuts(std::move(precuts), std::move(sidebands) , std::move(signalDefinition),std::move(phaseSpace));
 
   // Loop entries and fill
-  LoopAndFillEventSelection(chain, error_bands, vars, studies, mycuts);
+  CVUniverse::SetTruth(false);
+  LoopAndFillEventSelection(chain, error_bands, vars, vars2D, studies, mycuts);
   CVUniverse::SetTruth(true);
-  LoopAndFillEffDenom(truth, truth_bands, vars, mycuts);
+  LoopAndFillEffDenom(truth, truth_bands, vars, vars2D, mycuts);
   std::cout << "MC cut summary:\n" << mycuts << "\n";
   mycuts.resetStats();
 
   CVUniverse::SetTruth(false);
   TFile* outDir = TFile::Open("OutputMichelHists.root", "RECREATE");
-  LoopAndFillData(data, data_band,vars, data_studies, mycuts);
+  LoopAndFillData(data, data_band,vars, vars2D, data_studies, mycuts);
   std::cout << "Data cut summary:\n" << mycuts << "\n";
 
   for(auto& var: vars)
@@ -369,6 +410,7 @@ int main(const int /*argc*/, const char** /*argv*/)
 
   for(auto& study: studies) study->SaveOrDraw(*outDir);
   for(auto& var: vars) var->Write(*outDir);
+  for(auto& var: vars2D) var->Write(*outDir);
   TFile* dataDir = TFile::Open("DataStudyHists.root", "RECREATE");
   for(auto& study: data_studies) study->SaveOrDraw(*dataDir);  
   std::cout << "Success" << std::endl;
