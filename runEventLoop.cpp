@@ -321,14 +321,14 @@ int main(const int /*argc*/, const char** /*argv*/)
   TH1::AddDirectory(false);
 
   // Make a chain of events
-  const std::string mc_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_MC_Inextinguishable_merged.txt"); //"/etc/playlists/playlist_mc.txt");
-  const std::string data_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_DATA_Inextinguishable_merged.txt"); //"/etc/playlists/playlist_data.txt");
-  PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(mc_file_list, "CCQENu");
+  const std::string mc_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_MC_Inextinguishable_merged.txt"); //"/etc/playlists/USBTestMC.txt");
+  const std::string data_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_DATA_Inextinguishable_merged.txt"); //"/etc/playlists/USBTestData.txt");
+  PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(mc_file_list, "CCQENu"); //"MasterAnaDev");
   PlotUtils::ChainWrapper* truth = makeChainWrapperPtr(mc_file_list, "Truth");
-  PlotUtils::ChainWrapper* data = makeChainWrapperPtr(data_file_list, "CCQENu");
+  PlotUtils::ChainWrapper* data = makeChainWrapperPtr(data_file_list, "CCQENu"); //"MasterAnaDev");
 
   const std::string plist_string("minervame1a");
-  const std::string reco_tree_name("CCQENu");
+  const std::string reco_tree_name("CCQENu"); //"MasterAnaDev");
   const bool do_truth = false;
   const bool is_grid = false;
   // You're required to make some decisions
@@ -339,9 +339,9 @@ int main(const int /*argc*/, const char** /*argv*/)
   PlotUtils::MinervaUniverse::SetDeuteriumGeniePiTune(false);
 
   // Make a map of systematic universes
-  std::map< std::string, std::vector<CVUniverse*> > error_bands; //GetStandardSystematics(chain);
+  std::map< std::string, std::vector<CVUniverse*> > error_bands; // = GetStandardSystematics(chain);
   error_bands["cv"] = {new CVUniverse(chain)};
-  std::map< std::string, std::vector<CVUniverse*> > truth_bands; //GetStandardSystematics(truth);
+  std::map< std::string, std::vector<CVUniverse*> > truth_bands; //= GetStandardSystematics(truth);
   truth_bands["cv"] = {new CVUniverse(truth)};
 
   std::vector<double> dansPTBins = {0, 0.075, 0.15, 0.25, 0.325, 0.4, 0.475, 0.55, 0.7, 0.85, 1, 1.25, 1.5, 2.5, 4.5},
