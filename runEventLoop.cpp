@@ -24,6 +24,7 @@
 #pragma GCC diagnostic ignored "-Woverloaded-virtual"
 
 #include "event/CVUniverse.h"
+#include "event/MichelEvent.h"
 #include "systematics/Systematics.h"
 #include "cuts/MaxPzMu.h"
 
@@ -38,20 +39,9 @@
 #include "PlotUtils/Cutter.h"
 #include "util/Variable.h"
 #include "util/Variable2D.h"
-#include "cuts/BestMichelDistance.h"
-#include "cuts/BestMichelDistance2D.h"
 #include "cuts/SignalDefinition.h"
 #include "cuts/q3RecoCut.h"
-#include "cuts/hasMichel.h"
 #include "studies/Study.h"
-#include "studies/PerMichelVarByGENIELabel.h"
-#include "studies/PerMichelEventVarByGENIELabel.h" 
-#include "studies/CreateDataHistPerMichelEvent.h"
-#include "studies/CreateDataHistPerMichel.h"
-#include "event/Michel.h"
-#include "event/Cluster.h"
-#include "event/MichelEvent.h"
-#include "event/MatchedMichel.h"
 //#include "Binning.h" //TODO: Fix me
 #pragma GCC diagnostic pop
 #include <iostream>
@@ -270,8 +260,6 @@ void LoopAndFillData( PlotUtils::ChainWrapper* data,
   std::cout << "Finished data loop.\n";
 }
 
-
-
 void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
     				std::map<std::string, std::vector<CVUniverse*> > truth_bands,
     				std::vector<Variable*> vars,
@@ -391,7 +379,7 @@ int main(const int /*argc*/, const char** /*argv*/)
   mycuts.resetStats();
 
   CVUniverse::SetTruth(false);
-  TFile* outDir = TFile::Open("OutputMichelHists.root", "RECREATE");
+  TFile* outDir = TFile::Open("runEventLoop.root", "RECREATE");
   LoopAndFillData(data, data_band,vars, vars2D, data_studies, mycuts);
   std::cout << "Data cut summary:\n" << mycuts << "\n";
 

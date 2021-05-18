@@ -75,23 +75,6 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
   // systematic. And when they are, they'll only be shifted correctly if we
   // write these accessor functions.
   
-  /*
-  std::vector<Michel*> CreateMichels(){
-  std::vector<Michel*> return_michels;
-  unsigned int nmichels = GetNMichels();
-  CVUniverse* univ;
-  for (unsigned int i = 0; i < nmichels; ++i)
-  {
-    Michel* current_michel = new Michel(univ, i);
-    if (current_michel->is_fitted != 1) continue;
-    current_michel->DoesMichelMatchVtx(univ, current_michel);
-    current_michel->DoesMichelMatchClus(univ, current_michel);
-    return_michels.push_back(current_michel);
-  }
-  return return_michels;
-  }
-  */
-
   //Muon kinematics
   double GetMuonPT() const //GeV/c
   {
@@ -136,82 +119,6 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
     return result;
   }
   
-  virtual int GetNMichels() const{
-      return GetInt("FittedMichel_michel_fitPass_sz");
-  }
-  
-  virtual double GetMichelEnergy(int i){
-      return GetVecElem("FittedMichel_michel_energy", i);
-  }
-  
-  virtual int GetMichelFit(int i){
-      return GetVecElem("FittedMichel_michel_fitPass", i);
-  }
-  
-  virtual double GetMichelTime(int i){
-      return GetVecElem("FittedMichel_michel_time", i);
-  }
-  
-  virtual double GetMichelX1(int i){
-      return GetVecElem("FittedMichel_michel_x1", i);
-  }
-  
-  virtual double GetMichelX2(int i){
-      return GetVecElem("FittedMichel_michel_x2", i);
-  }
-  
-  virtual double GetMichelU1(int i){
-      return GetVecElem("FittedMichel_michel_u1", i);
-  }
-  
-  virtual double GetMichelU2(int i){
-      return GetVecElem("FittedMichel_michel_u2", i);
-  }
-  
-  
-  virtual int GetNTruePions() const{
-      return GetInt("FittedMichel_all_piontrajectory_trackID_sz");
-  }
-  
-  virtual int GetPionParentID(int i) const {
-     return GetVecElem("FittedMichel_all_piontrajectory_ParentID", i);
-  }
-  
-  virtual int GetPionPDG(int i) const{
-     return GetVecElem("FittedMichel_all_piontrajectory_pdg", i);
-  }
-  
-  virtual double GetPionE(int i) const{
-     return GetVecElem("FittedMichel_all_piontrajectory_energy",i)/pow(10,3);
-  }
-  
-  virtual double GetPionP(int i) const{
-    return GetVecElem("FittedMichel_all_piontrajectory_momentum", i)/pow(10,3);
-  }
-  
-  virtual double GetPionMass(int i) const{
-    double pionmass = sqrt(pow(GetPionE(i), 2) - pow(GetPionP(i), 2));
-    return pionmass;
-  }
-  
-  virtual double GetPionKE(int i) const{
-    return GetPionE(i) - GetPionMass(i);
-  }
-
-  virtual double GetLowTpi() const {
-     double lowesttpi = 9999.;
-     int nFSpi = GetNTruePions();
-     for (int i = 0; i < nFSpi; i++){
-         int pdg = GetPionPDG(i);
-         int trackid = GetPionParentID(i);
-         if (trackid != 0 ) continue;
-         if (pdg != 211) continue;
-         double pionKE = GetPionKE(i);
-         if (lowesttpi > pionKE) lowesttpi = pionKE;
-      }
-      //std::cout << "lowest energy pi << " << lowesttpi << std::endl;
-      return lowesttpi;
-  }
   virtual double GetTrueQ2() const {
     return GetDouble("mc_Q2");
   }
@@ -242,15 +149,6 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
   virtual double GetMuonQP() const {
     return GetDouble("CCQENu_minos_trk_qp"); //"MasterAnaDev_minos_trk_qp");
   }
-
-  //virtual double GetLowTpi() const{
-
-  //}
- 
- // virual double GetBestMichelDist(int i) const {
-     
- //  }
-  
 };
 
 #endif
