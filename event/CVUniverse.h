@@ -147,7 +147,7 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
   virtual int GetTruthNuPDG() const { return GetInt("mc_incoming"); }
 
   virtual double GetMuonQP() const {
-    return GetDouble("CCQENu_minos_trk_qp"); //"MasterAnaDev_minos_trk_qp");
+    return GetDouble((GetAnaToolName() + "_minos_trk_qp").c_str());
   }
 };
 

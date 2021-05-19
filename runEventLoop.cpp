@@ -1,3 +1,5 @@
+#define OUT_FILE_NAME "runEventLoop.root"
+
 #define USAGE \
 "\n*** USAGE ***\n"\
 "runEventLoop <dataPlaylist.txt> <mcPlaylist.txt>\n\n"\
@@ -10,7 +12,7 @@
 "entries will be treated like data, and the second playlist's entries must\n"\
 "have the \"Truth\" tree to use for calculating the efficiency denominator.\n\n"\
 "*** Output ***\n"\
-"Produces a single runEventLoop.root file with all histograms needed for the\n"\
+"Produces a single " OUT_FILE_NAME " file with all histograms needed for the\n"\
 "ExtractCrossSection program also built by this package.  You'll need a\n"\
 ".rootlogon.C that loads ROOT object definitions from PlotUtils to access\n"\
 "systematics information from these files.\n\n"\
@@ -20,6 +22,15 @@
 "about what went wrong will be printed to stderr.  So, they'll end up in your\n"\
 "terminal, but you can separate them from everything else with something like:\n"\
 "\"runEventLoop data.txt mc.txt 2> errors.txt\"\n"
+
+enum ErrorCodes
+{
+  success = 0,
+  badCmdLine = 1,
+  badInputFile = 2,
+  badFileRead = 3,
+  badOutputFile = 4
+};
 
 //PlotUtils includes
 //No junk from PlotUtils please!  I already
@@ -39,6 +50,7 @@
 #include "PlotUtils/MnvPlotter.h"
 #include "PlotUtils/cuts/CCInclusiveCuts.h"
 #include "PlotUtils/cuts/CCInclusiveSignal.h"
+#include "PlotUtils/CrashOnROOTMessage.h" //Sets up ROOT's debug callbacks by itself
 #include "util/Categorized.h"
 #include "PlotUtils/Cutter.h"
 #include "util/Variable.h"
@@ -49,15 +61,6 @@
 //#include "Binning.h" //TODO: Fix me
 #pragma GCC diagnostic pop
 #include <iostream>
-
-enum ErrorCodes
-{
-  success = 0,
-  badCmdLine = 1,
-  badInputFile = 2,
-  badFileRead = 3,
-  badOutputFile = 4
-};
 
 // Histogram binning constants
 const int nbins = 30;
@@ -404,10 +407,11 @@ int main(const int argc, const char** argv)
   if(!inferRecoTreeNameAndCheckTreeNames(mc_file_list, data_file_list, reco_tree_name))
   {
     std::cerr << "Failed to find required trees in MC playlist " << mc_file_list << " and/or data playlist " << data_file_list << ".\n" << USAGE << "\n";
-    return badCmdLine;
+    return badInputFile;
   }
 
   const bool doCCQENuValidation = (reco_tree_name == "CCQENu");
+  if(doCCQENuValidation) std::cerr << "Detected that tree name is CCQENu.  Making validation histograms and disabling systematics.\n";
 
   //TODO: makeChainWrapperPtr() doesn't let me react to failing to read files.
   PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(mc_file_list, reco_tree_name);
@@ -475,35 +479,55 @@ int main(const int argc, const char** argv)
   PlotUtils::Cutter<CVUniverse, MichelEvent> mycuts(std::move(precuts), std::move(sidebands) , std::move(signalDefinition),std::move(phaseSpace));
 
   // Loop entries and fill
-  CVUniverse::SetTruth(false);
-  LoopAndFillEventSelection(chain, error_bands, vars, vars2D, studies, mycuts);
-  CVUniverse::SetTruth(true);
-  LoopAndFillEffDenom(truth, truth_bands, vars, vars2D, mycuts);
-  std::cout << "MC cut summary:\n" << mycuts << "\n";
-  mycuts.resetStats();
-
-  CVUniverse::SetTruth(false);
-  TFile* outDir = TFile::Open("runEventLoop.root", "RECREATE");
-  LoopAndFillData(data, data_band,vars, vars2D, data_studies, mycuts);
-  std::cout << "Data cut summary:\n" << mycuts << "\n";
-
-  for(auto& var: vars)
+  try
   {
-    // You must always sync your HistWrappers before plotting them
-    var->SyncCVHistos();
+    CVUniverse::SetTruth(false);
+    LoopAndFillEventSelection(chain, error_bands, vars, vars2D, studies, mycuts);
+    CVUniverse::SetTruth(true);
+    LoopAndFillEffDenom(truth, truth_bands, vars, vars2D, mycuts);
+    std::cout << "MC cut summary:\n" << mycuts << "\n";
+    mycuts.resetStats();
 
-    //Categorized makes sure GetTitle() is the same as the labels you were looping over before
-    var->m_bestPionByGENIELabel->visit([](PlotUtils::HistWrapper<CVUniverse>& categ)
-                                       {
-                                         PlotCVAndError(categ.hist, categ.hist->GetTitle());
-                                         PlotErrorSummary(categ.hist, categ.hist->GetTitle());
-                                       });
+    CVUniverse::SetTruth(false);
+    LoopAndFillData(data, data_band,vars, vars2D, data_studies, mycuts);
+    std::cout << "Data cut summary:\n" << mycuts << "\n";
+
+    TFile* outDir = TFile::Open(OUT_FILE_NAME, "RECREATE");
+    if(!outDir)
+    {
+      std::cerr << "Failed to open a file named " << OUT_FILE_NAME << " in the current directory for writing histograms.\n";
+      return badOutputFile;
+    }
+
+    for(auto& var: vars)
+    {
+      // You must always sync your HistWrappers before plotting them
+      var->SyncCVHistos();
+
+      //Categorized makes sure GetTitle() is the same as the labels you were looping over before
+      var->m_bestPionByGENIELabel->visit([](PlotUtils::HistWrapper<CVUniverse>& categ)
+                                         {
+                                           PlotCVAndError(categ.hist, categ.hist->GetTitle());
+                                           PlotErrorSummary(categ.hist, categ.hist->GetTitle());
+                                         });
+    }
+
+    for(auto& study: studies) study->SaveOrDraw(*outDir);
+    for(auto& var: vars) var->Write(*outDir);
+    for(auto& var: vars2D) var->Write(*outDir);
+
+    //TODO: Remove this if we don't end up using it
+    /*TFile* dataDir = TFile::Open("DataStudyHists.root", "RECREATE");
+    for(auto& study: data_studies) study->SaveOrDraw(*dataDir);*/
+    std::cout << "Success" << std::endl;
+  }
+  catch(const ROOT::exception& e)
+  {
+    std::cerr << "Ending on a ROOT error message.  No histograms will be produced.\n"
+              << "If the message talks about \"TNetXNGFile\", this could be a problem with dCache.  The message is:\n"
+              << e.what() << "\n" << USAGE << "\n";
+    return badFileRead;
   }
 
-  for(auto& study: studies) study->SaveOrDraw(*outDir);
-  for(auto& var: vars) var->Write(*outDir);
-  for(auto& var: vars2D) var->Write(*outDir);
-  TFile* dataDir = TFile::Open("DataStudyHists.root", "RECREATE");
-  for(auto& study: data_studies) study->SaveOrDraw(*dataDir);  
-  std::cout << "Success" << std::endl;
+  return success;
 }
