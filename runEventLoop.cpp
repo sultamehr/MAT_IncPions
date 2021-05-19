@@ -1,21 +1,25 @@
-//==============================================================================
-// MINERvA Analysis Toolkit "Minimum Adoption" Event Loop Example
-//
-// "Minimum adoption" means that it only uses the two essential MAT tools:
-// Universes and HistWrappers. For an "full adoption" example that additionally
-// makes use of Cuts, MacroUtil, and Variable, refer to the example in
-// ../MAT_Tutorial/.
-//
-// This script follows the canonical event-looping structure:
-// Setup (I/O, variables, histograms, systematics)
-// Loop events
-//   loop universes
-//     make cuts
-//     loop variables
-//       fill histograms
-// Plot and Save
-//==============================================================================
-
+#define USAGE \
+"\n*** USAGE ***\n"\
+"runEventLoop <dataPlaylist.txt> <mcPlaylist.txt>\n\n"\
+"*** Explanation ***\n"\
+"Reduce MasterAnaDev AnaTuples to event selection histograms to extract a\n"\
+"single-differential inclusive cross section for the 2021 MINERvA 101 tutorial.\n\n"\
+"*** The Input Files ***\n"\
+"Playlist files are plaintext files with 1 file name per line.  Filenames may be\n"\
+"xrootd URLs or refer to the local filesystem.  The first playlist file's\n"\
+"entries will be treated like data, and the second playlist's entries must\n"\
+"have the \"Truth\" tree to use for calculating the efficiency denominator.\n\n"\
+"*** Output ***\n"\
+"Produces a single runEventLoop.root file with all histograms needed for the\n"\
+"ExtractCrossSection program also built by this package.  You'll need a\n"\
+".rootlogon.C that loads ROOT object definitions from PlotUtils to access\n"\
+"systematics information from these files.\n\n"\
+"*** Return Codes ***\n"\
+"0 indicates success.  All histograms are valid only in this case.  Any other\n"\
+"return code indicates that histograms should not be used.  Error messages\n"\
+"about what went wrong will be printed to stderr.  So, they'll end up in your\n"\
+"terminal, but you can separate them from everything else with something like:\n"\
+"\"runEventLoop data.txt mc.txt 2> errors.txt\"\n"
 
 //PlotUtils includes
 //No junk from PlotUtils please!  I already
@@ -45,8 +49,6 @@
 //#include "Binning.h" //TODO: Fix me
 #pragma GCC diagnostic pop
 #include <iostream>
-
-#define USAGE "TODO: Write USAGE"
 
 enum ErrorCodes
 {
@@ -382,7 +384,7 @@ int main(const int argc, const char** argv)
   if(argc != nArgsExpected + 1) //argc is the size of argv.  I check for number of arguments + 1 because
                                 //argv[0] is always the path to the executable.
   {
-    std::cerr << "Expected " << nArgsExpected << ", but got " << argc - 1 << "\n" << USAGE << "\n";
+    std::cerr << "Expected " << nArgsExpected << " arguments, but got " << argc - 1 << "\n" << USAGE << "\n";
     return badCmdLine;
   }
 
@@ -390,8 +392,8 @@ int main(const int argc, const char** argv)
   //Only checking the first file in each playlist because opening each file an extra time
   //remotely (e.g. through xrootd) can get expensive.
   //TODO: Look in INSTALL_DIR if files not found?
-  const std::string mc_file_list = argv[1],
-                    data_file_list = argv[2];
+  const std::string mc_file_list = argv[2],
+                    data_file_list = argv[1];
 
   // Make a chain of events
   /*const std::string mc_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_MC_Inextinguishable_merged.txt"); //"/etc/playlists/USBTestMC.txt");
@@ -423,9 +425,13 @@ int main(const int argc, const char** argv)
   PlotUtils::MinervaUniverse::SetDeuteriumGeniePiTune(false);
 
   // Make a map of systematic universes
-  std::map< std::string, std::vector<CVUniverse*> > error_bands; // = GetStandardSystematics(chain);
+  // Leave out systematics when making validation histograms
+  //TODO: This might not work with the NSF Validation Suite.  I think it uses CCQENu tuples.
+  std::map< std::string, std::vector<CVUniverse*> > error_bands;
+  if(!doCCQENuValidation) error_bands = GetStandardSystematics(chain);
   error_bands["cv"] = {new CVUniverse(chain)};
-  std::map< std::string, std::vector<CVUniverse*> > truth_bands; //= GetStandardSystematics(truth);
+  std::map< std::string, std::vector<CVUniverse*> > truth_bands;
+  if(!doCCQENuValidation) truth_bands = GetStandardSystematics(truth);
   truth_bands["cv"] = {new CVUniverse(truth)};
 
   std::vector<double> dansPTBins = {0, 0.075, 0.15, 0.25, 0.325, 0.4, 0.475, 0.55, 0.7, 0.85, 1, 1.25, 1.5, 2.5, 4.5},
