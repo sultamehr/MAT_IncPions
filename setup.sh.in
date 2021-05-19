@@ -8,3 +8,9 @@ PREFIX=${MINERVA_PREFIX:-"@CMAKE_INSTALL_PREFIX@"}
 #be autocompleted by bash.
 export LD_LIBRARY_PATH=${PREFIX}/lib:$LD_LIBRARY_PATH
 export PATH=${PREFIX}/bin:$PATH
+
+#Bash autocompletion support for playlist files.  Auto-complete will kick in for
+#any executable this package produces and suggest playlist names from the install
+#directory as well as the current directory.
+complete -o filenames -W '$(find ${PREFIX}/bin -type f -printf %f\\n)' -o default -o bashdefault $(find ${PREFIX}/etc/playlists -type f -printf %f\\n)
+
