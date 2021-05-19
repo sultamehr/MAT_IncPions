@@ -46,6 +46,17 @@
 #pragma GCC diagnostic pop
 #include <iostream>
 
+#define USAGE "TODO: Write USAGE"
+
+enum ErrorCodes
+{
+  success = 0,
+  badCmdLine = 1,
+  badInputFile = 2,
+  badFileRead = 3,
+  badOutputFile = 4
+};
+
 // Histogram binning constants
 const int nbins = 30;
 const double xmin = 0.;
@@ -301,27 +312,112 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
   std::cout << "Finished efficiency denominator loop.\n";
 }
 
+//Returns false if recoTreeName could not be inferred
+bool inferRecoTreeNameAndCheckTreeNames(const std::string& mcPlaylistName, const std::string& dataPlaylistName, std::string& recoTreeName)
+{
+  const std::vector<std::string> knownTreeNames = {"Truth", "Meta"};
+  bool areFilesOK = false;
+
+  std::ifstream playlist(mcPlaylistName);
+  std::string firstFile = "";
+  playlist >> firstFile;
+  auto testFile = TFile::Open(firstFile.c_str());
+  if(!testFile)
+  {
+    std::cerr << "Failed to open the first MC file at " << firstFile << "\n";
+    return false;
+  }
+
+  //Does the MC playlist have the Truth tree?  This is needed for the efficiency denominator.
+  const auto truthTree = testFile->Get("Truth");
+  if(truthTree == nullptr || !truthTree->IsA()->InheritsFrom(TClass::GetClass<TTree>()))
+  {
+    std::cerr << "Could not find the \"Truth\" tree in MC file named " << firstFile << "\n";
+    return false;
+  }
+
+  //Figure out what the reco tree name is
+  for(auto key: *testFile->GetListOfKeys())
+  {
+    if(static_cast<TKey*>(key)->ReadObj()->IsA()->InheritsFrom(TClass::GetClass<TTree>())
+       && std::find(knownTreeNames.begin(), knownTreeNames.end(), key->GetName()) == knownTreeNames.end())
+    {
+      recoTreeName = key->GetName();
+      areFilesOK = true;
+    }
+  }
+  delete testFile;
+  testFile = nullptr;
+
+  //Make sure the data playlist's first file has the same reco tree
+  playlist.open(dataPlaylistName);
+  playlist >> firstFile;
+  testFile = TFile::Open(firstFile.c_str());
+  if(!testFile)
+  {
+    std::cerr << "Failed to open the first data file at " << firstFile << "\n";
+    return false;
+  }
+
+  const auto recoTree = testFile->Get(recoTreeName.c_str());
+  if(recoTree == nullptr || !recoTree->IsA()->InheritsFrom(TClass::GetClass<TTree>()))
+  {
+    std::cerr << "Could not find the \"" << recoTreeName << "\" tree in data file named " << firstFile << "\n";
+    return false;
+  }
+
+  return areFilesOK;
+}
+
 //==============================================================================
 // Main
 //==============================================================================
-int main(const int /*argc*/, const char** /*argv*/)
+int main(const int argc, const char** argv)
 {
   TH1::AddDirectory(false);
 
-  // Make a chain of events
-  const std::string mc_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_MC_Inextinguishable_merged.txt"); //"/etc/playlists/USBTestMC.txt");
-  const std::string data_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_DATA_Inextinguishable_merged.txt"); //"/etc/playlists/USBTestData.txt");
-  PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(mc_file_list, "CCQENu"); //"MasterAnaDev");
-  PlotUtils::ChainWrapper* truth = makeChainWrapperPtr(mc_file_list, "Truth");
-  PlotUtils::ChainWrapper* data = makeChainWrapperPtr(data_file_list, "CCQENu"); //"MasterAnaDev");
+  //Validate input.
+  //I expect a data playlist file name and an MC playlist file name which is exactly 2 arguments.
+  const int nArgsExpected = 2;
+  if(argc != nArgsExpected + 1) //argc is the size of argv.  I check for number of arguments + 1 because
+                                //argv[0] is always the path to the executable.
+  {
+    std::cerr << "Expected " << nArgsExpected << ", but got " << argc - 1 << "\n" << USAGE << "\n";
+    return badCmdLine;
+  }
 
-  const std::string plist_string("minervame1a");
-  const std::string reco_tree_name("CCQENu"); //"MasterAnaDev");
+  //One playlist must contain only MC files, and the other must contain only data files.
+  //Only checking the first file in each playlist because opening each file an extra time
+  //remotely (e.g. through xrootd) can get expensive.
+  //TODO: Look in INSTALL_DIR if files not found?
+  const std::string mc_file_list = argv[1],
+                    data_file_list = argv[2];
+
+  // Make a chain of events
+  /*const std::string mc_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_MC_Inextinguishable_merged.txt"); //"/etc/playlists/USBTestMC.txt");
+  const std::string data_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_DATA_Inextinguishable_merged.txt"); //"/etc/playlists/USBTestData.txt");*/
+
+  //Check that necessary TTrees exist in the first file of mc_file_list and data_file_list
+  std::string reco_tree_name;
+  if(!inferRecoTreeNameAndCheckTreeNames(mc_file_list, data_file_list, reco_tree_name))
+  {
+    std::cerr << "Failed to find required trees in MC playlist " << mc_file_list << " and/or data playlist " << data_file_list << ".\n" << USAGE << "\n";
+    return badCmdLine;
+  }
+
+  const bool doCCQENuValidation = (reco_tree_name == "CCQENu");
+
+  //TODO: makeChainWrapperPtr() doesn't let me react to failing to read files.
+  PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(mc_file_list, reco_tree_name);
+  PlotUtils::ChainWrapper* truth = makeChainWrapperPtr(mc_file_list, "Truth");
+  PlotUtils::ChainWrapper* data = makeChainWrapperPtr(data_file_list, reco_tree_name);
+
+  const std::string plist_string("minervame1a"); //TODO: Infer this from the files somehow?
   const bool do_truth = false;
   const bool is_grid = false;
   // You're required to make some decisions
   PlotUtils::MinervaUniverse::SetNuEConstraint(true);
-  PlotUtils::MinervaUniverse::SetPlaylist("minervame1A");
+  PlotUtils::MinervaUniverse::SetPlaylist("minervame1A"); //TODO: Infer this from the files somehow?
   PlotUtils::MinervaUniverse::SetAnalysisNuPDG(14);
   PlotUtils::MinervaUniverse::SetNonResPiReweight(true);
   PlotUtils::MinervaUniverse::SetDeuteriumGeniePiTune(false);
@@ -340,19 +436,21 @@ int main(const int /*argc*/, const char** /*argv*/)
     new Variable("pzmu", "p_{||, #mu} [GeV/c]", dansPzBins, &CVUniverse::GetMuonPz, &CVUniverse::GetMuonPzTrue)
   };
 
-  std::vector<Variable2D*> vars2D = {
-    new Variable2D(*vars[1], *vars[0])
-  };
+  std::vector<Variable2D*> vars2D;
+  if(doCCQENuValidation) vars2D.push_back(new Variable2D(*vars[1], *vars[0]));
+  //TODO: Disable validation suite histograms too if the tree name is not CCQENu
 
   std::vector<Study*> studies;
 
   //Creating the single Data universe 
+  //TODO: Doesn't this make another set of ChainWrappers?
   PlotUtils::MacroUtil util(reco_tree_name, mc_file_list, data_file_list,
                     plist_string, do_truth, is_grid);
+  //TODO: I should be able to simplify setting up the data CV a lot
   CVUniverse* data_universe = new CVUniverse(util.m_data);
   std::vector<CVUniverse*> data_band = {data_universe};
   std::map<std::string, std::vector<CVUniverse*> > data_error_bands;
-  data_error_bands["cv_data"] = data_band;
+  data_error_bands["cv"] = data_band;
   
   std::vector<Study*> data_studies;
 
