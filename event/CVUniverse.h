@@ -19,8 +19,8 @@
 #include "PlotUtils/MinervaUniverse.h"
 
 class CVUniverse : public PlotUtils::MinervaUniverse {
- public:
-  #include "PlotUtils/SystCalcs/WeightFunctions.h" // Get*Weight
+
+  public:
   #include "PlotUtils/SystCalcs/MuonFunctions.h" // GetMinosEfficiencyWeight
   #include "PlotUtils/SystCalcs/TruthFunctions.h" //Getq3True
   // ========================================================================
@@ -30,36 +30,6 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
       : PlotUtils::MinervaUniverse(chw, nsigma) {}
 
   virtual ~CVUniverse() {}
-
-  // ========================================================================
-  // Get Weight
-  // This provides you with some of MnvGENIEv1 weights.
-  // Eventually you'll want to validate which weights YOU want to use.
-  // And eventually, there will be a common PlotUtils function that does this
-  // for you.
-  // ========================================================================
-  virtual double GetWeight() const {
-    double wgt_flux_and_cv = 1., wgt_genie = 1., wgt_2p2h = 1.;
-    double wgt_rpa = 1., wgt_mueff = 1.;
-
-    // flux + cv
-    wgt_flux_and_cv = GetFluxAndCVWeight();
-
-    // genie
-    wgt_genie = GetGenieWeight();
-
-    // 2p2h
-    wgt_2p2h = GetLowRecoil2p2hWeight();
-
-    // rpa
-    wgt_rpa = GetRPAWeight();
-
-    // MINOS muon tracking efficiency
-    //if (!IsTruth() && IsMinosMatchMuon())
-    wgt_mueff = GetMinosEfficiencyWeight();
-
-    return wgt_flux_and_cv * wgt_genie * wgt_2p2h * wgt_rpa * wgt_mueff;
-  }
 
   // ========================================================================
   // Write a "Get" function for all quantities access by your analysis.
@@ -149,6 +119,11 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
   virtual double GetMuonQP() const {
     return GetDouble((GetAnaToolName() + "_minos_trk_qp").c_str());
   }
+
+  //Still needed for some systematics to compile, but shouldn't be used for reweighting anymore.
+  protected:
+    #include "PlotUtils/SystCalcs/WeightFunctions.h" // Get*Weight
+
 };
 
 #endif

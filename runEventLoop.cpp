@@ -53,6 +53,9 @@ enum ErrorCodes
 #include "PlotUtils/CrashOnROOTMessage.h" //Sets up ROOT's debug callbacks by itself
 #include "util/Categorized.h"
 #include "PlotUtils/Cutter.h"
+
+#include "util/GetMnvTunev1.h"
+
 #include "util/Variable.h"
 #include "util/Variable2D.h"
 #include "cuts/SignalDefinition.h"
@@ -184,12 +187,21 @@ void LoopAndFillEventSelection(
     std::vector<Variable*> vars,
     std::vector<Variable2D*> vars2D,
     std::vector<Study*> studies,
-    PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
+    PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts,
+    PlotUtils::Model<CVUniverse, MichelEvent>& model)
 {
+  assert(!error_bands["cv"].empty() && "\"cv\" error band is empty!  Can't set Model weight.");
+  auto& cvUniv = error_bands["cv"].front();
+
   std::cout << "Starting MC reco loop...\n";
   for (int i=0; i<chain->GetEntries(); ++i)
   {
     if(i%1000==0) std::cout << (i/1000) << "k\n" << std::flush;
+
+    MichelEvent cvEvent;
+    cvUniv->SetEntry(i);
+    model.SetEntry(*cvUniv, cvEvent);
+    const double cvWeight = model.GetWeight(*cvUniv, cvEvent);
 
     //=========================================
     // Systematics loop(s)
@@ -204,11 +216,12 @@ void LoopAndFillEventSelection(
         // Tell the Event which entry in the TChain it's looking at
         universe->SetEntry(i);
         
-        // THis is where you would Access/create a Michel
+        // This is where you would Access/create a Michel
 
-        const double weight = universe->GetWeight(); //TODO: Model/Reweighter
+        //weight is ignored in isMCSelected() for all but the CV Universe.
+        if (!michelcuts.isMCSelected(*universe, myevent, cvWeight).all()) continue; //all is another function that will later help me with sidebands
+        const double weight = model.GetWeight(*universe, myevent); //Only calculate the per-universe weight for events that will actually use it.
 
-        if (!michelcuts.isMCSelected(*universe, myevent, weight).all()) continue; //all is another function that will later help me with sidebands
         const bool isSignal = michelcuts.isSignal(*universe, weight);
 
         if(isSignal)
@@ -218,8 +231,6 @@ void LoopAndFillEventSelection(
 
         for(auto& var: vars)
         {
-          (*var->m_bestPionByGENIELabel)[universe->GetInteractionType()].FillUniverse(universe, var->GetRecoValue(*universe, myevent.m_idx), universe->GetWeight());
-
           //Cross section components
           if(isSignal)
           {
@@ -280,12 +291,21 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
     				std::map<std::string, std::vector<CVUniverse*> > truth_bands,
     				std::vector<Variable*> vars,
                                 std::vector<Variable2D*> vars2D,
-    				PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts)
+    				PlotUtils::Cutter<CVUniverse, MichelEvent>& michelcuts,
+                                PlotUtils::Model<CVUniverse, MichelEvent>& model)
 {
+  assert(!truth_bands["cv"].empty() && "\"cv\" error band is empty!  Could not set Model entry.");
+  auto& cvUniv = truth_bands["cv"].front();
+
   std::cout << "Starting efficiency denominator loop...\n";
   for (int i=0; i<truth->GetEntries(); ++i)
   {
     if(i%1000==0) std::cout << (i/1000) << "k\n" << std::flush;
+
+    MichelEvent cvEvent;
+    cvUniv->SetEntry(i);
+    model.SetEntry(*cvUniv, cvEvent);
+    const double cvWeight = model.GetWeight(*cvUniv, cvEvent);
 
     //=========================================
     // Systematics loop(s)
@@ -295,11 +315,13 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
       std::vector<CVUniverse*> truth_band_universes = band.second;
       for (auto universe : truth_band_universes)
       {
+        MichelEvent myevent; //Only used to keep the Model happy
+
         // Tell the Event which entry in the TChain it's looking at
         universe->SetEntry(i);
 
-        const double weight = universe->GetWeight(); //TODO: Model/Reweighter
-        if (!michelcuts.isEfficiencyDenom(*universe, weight)) continue; 
+        if (!michelcuts.isEfficiencyDenom(*universe, cvWeight)) continue; //Weight is ignored for isEfficiencyDenom() in all but the CV universe 
+        const double weight = model.GetWeight(*universe, myevent); //Only calculate the weight for events that will use it
 
         //Fill efficiency denominator now: 
         for(auto var: vars)
@@ -477,14 +499,15 @@ int main(const int argc, const char** argv)
   phaseSpace.emplace_back(new MaxPzMu<CVUniverse>(60e3));
 
   PlotUtils::Cutter<CVUniverse, MichelEvent> mycuts(std::move(precuts), std::move(sidebands) , std::move(signalDefinition),std::move(phaseSpace));
+  PlotUtils::Model<CVUniverse, MichelEvent> model(GetMnvTunev1<CVUniverse, MichelEvent>());
 
   // Loop entries and fill
   try
   {
     CVUniverse::SetTruth(false);
-    LoopAndFillEventSelection(chain, error_bands, vars, vars2D, studies, mycuts);
+    LoopAndFillEventSelection(chain, error_bands, vars, vars2D, studies, mycuts, model);
     CVUniverse::SetTruth(true);
-    LoopAndFillEffDenom(truth, truth_bands, vars, vars2D, mycuts);
+    LoopAndFillEffDenom(truth, truth_bands, vars, vars2D, mycuts, model);
     std::cout << "MC cut summary:\n" << mycuts << "\n";
     mycuts.resetStats();
 
