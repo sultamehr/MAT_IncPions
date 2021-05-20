@@ -357,7 +357,7 @@ bool inferRecoTreeNameAndCheckTreeNames(const std::string& mcPlaylistName, const
 
   //Does the MC playlist have the Truth tree?  This is needed for the efficiency denominator.
   const auto truthTree = testFile->Get("Truth");
-  if(truthTree == nullptr || !truthTree->IsA()->InheritsFrom(TClass::GetClass<TTree>()))
+  if(truthTree == nullptr || !truthTree->IsA()->InheritsFrom(TClass::GetClass("TTree")))
   {
     std::cerr << "Could not find the \"Truth\" tree in MC file named " << firstFile << "\n";
     return false;
@@ -366,7 +366,7 @@ bool inferRecoTreeNameAndCheckTreeNames(const std::string& mcPlaylistName, const
   //Figure out what the reco tree name is
   for(auto key: *testFile->GetListOfKeys())
   {
-    if(static_cast<TKey*>(key)->ReadObj()->IsA()->InheritsFrom(TClass::GetClass<TTree>())
+    if(static_cast<TKey*>(key)->ReadObj()->IsA()->InheritsFrom(TClass::GetClass("TTree"))
        && std::find(knownTreeNames.begin(), knownTreeNames.end(), key->GetName()) == knownTreeNames.end())
     {
       recoTreeName = key->GetName();
@@ -387,7 +387,7 @@ bool inferRecoTreeNameAndCheckTreeNames(const std::string& mcPlaylistName, const
   }
 
   const auto recoTree = testFile->Get(recoTreeName.c_str());
-  if(recoTree == nullptr || !recoTree->IsA()->InheritsFrom(TClass::GetClass<TTree>()))
+  if(recoTree == nullptr || !recoTree->IsA()->InheritsFrom(TClass::GetClass("TTree")))
   {
     std::cerr << "Could not find the \"" << recoTreeName << "\" tree in data file named " << firstFile << "\n";
     return false;
