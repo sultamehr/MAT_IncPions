@@ -247,6 +247,12 @@ void LoopAndFillEventSelection(
           {
             var->efficiencyNumerator->FillUniverse(universe, var->GetTrueValueX(*universe), var->GetTrueValueY(*universe), weight);
           }
+	  else{
+	    int bkgd_ID = -1;
+	    if (universe->GetCurrent()==2)bkgd_ID=0;
+	    else bkgd_ID=1;
+	    (*var->m_backgroundHists)[bkgd_ID].FillUniverse(universe, var->GetRecoValueX(*universe), var->GetRecoValueY(*universe), weight);
+	  }
         }
       } // End band's universe loop
     } // End Band loop

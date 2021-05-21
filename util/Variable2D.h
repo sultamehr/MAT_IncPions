@@ -20,11 +20,20 @@ class Variable2D: public PlotUtils::Variable2DBase<CVUniverse>
     void InitializeMCHists(std::map<std::string, std::vector<CVUniverse*>>& mc_error_bands,
                            std::map<std::string, std::vector<CVUniverse*>>& truth_error_bands)
     {
+
+      std::map<int, std::string> BKGLabels = {{0, "NC_Bkg"},
+					       {1, "Bkg_Wrong_Sign"}};
+      
+      m_backgroundHists = new util::Categorized<Hist, int>((GetName() + "_by_BKG_Label").c_str(),
+							   GetName().c_str(), BKGLabels,
+							   GetBinVecX(), GetBinVecY(), mc_error_bands);
+
       efficiencyNumerator = new Hist((GetNameX() + "_" + GetNameY() + "_efficiency_numerator").c_str(), GetName().c_str(), GetBinVecX(), GetBinVecY(), mc_error_bands);
       efficiencyDenominator = new Hist((GetNameX() + "_" + GetNameY() + "_efficiency_denominator").c_str(), GetName().c_str(), GetBinVecX(), GetBinVecY(), truth_error_bands);
     }
 
     //Histograms to be filled
+    util::Categorized<Hist, int>* m_backgroundHists;
     Hist* dataHist;  
     Hist* efficiencyNumerator;
     Hist* efficiencyDenominator;
@@ -40,6 +49,12 @@ class Variable2D: public PlotUtils::Variable2DBase<CVUniverse>
     {
       SyncCVHistos();
       file.cd();
+
+      m_backgroundHists->visit([&file](Hist& categ)
+                                    {
+                                      categ.hist->SetDirectory(&file);
+                                      categ.hist->Write(); //TODO: Or let the TFile destructor do this the "normal" way?                                                                                           
+                                    });
 
       if (dataHist->hist) {
 		dataHist->hist->SetDirectory(&file);
@@ -65,6 +80,7 @@ class Variable2D: public PlotUtils::Variable2DBase<CVUniverse>
     //Framework, this was implicitly done by the event loop.
     void SyncCVHistos()
     {
+      m_backgroundHists->visit([](Hist& categ) { categ.SyncCVHistos(); });
       if(dataHist) dataHist->SyncCVHistos();
       if(efficiencyNumerator) efficiencyNumerator->SyncCVHistos();
       if(efficiencyDenominator) efficiencyDenominator->SyncCVHistos();
