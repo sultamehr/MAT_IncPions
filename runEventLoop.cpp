@@ -65,119 +65,6 @@ enum ErrorCodes
 #pragma GCC diagnostic pop
 #include <iostream>
 
-// Histogram binning constants
-const int nbins = 30;
-const double xmin = 0.;
-const double xmax = 20.e3;
-
-//==============================================================================
-// Plot
-//==============================================================================
-void PlotErrorSummary(PlotUtils::MnvH1D* h, std::string label)
-{
-  PlotUtils::MnvH1D* hist = (PlotUtils::MnvH1D*)h->Clone("hist");
-  PlotUtils::MnvPlotter mnv_plotter( kCompactStyle);
-  TCanvas cE("c1", "c1");
-
-  // Group GENIE bands
-  mnv_plotter.error_summary_group_map.clear();
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrAbs_N");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrAbs_pi");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrCEx_N");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrCEx_pi");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrElas_N");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrElas_pi");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrInel_N");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_FrPiProd_N");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back(
-      "GENIE_FrPiProd_pi");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_MFP_N");
-  mnv_plotter.error_summary_group_map["Genie_FSI"].push_back("GENIE_MFP_pi");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_AGKYxF1pi");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_AhtBY");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_BhtBY");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_CCQEPauliSupViaKF");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_CV1uBY");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_CV2uBY");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_EtaNCEL");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_MaNCEL");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_MaRES");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_MvRES");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_NormDISCC");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_NormNCRES");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_RDecBR1gamma");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_Rvn1pi");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_Rvn2pi");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_Rvn3pi");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_Rvp1pi");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_Rvp2pi");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_Theta_Delta2Npi");
-  mnv_plotter.error_summary_group_map["Genie_InteractionModel"].push_back(
-      "GENIE_VecFFCCQEshape");
-
-  mnv_plotter.error_summary_group_map["RPA"].push_back("RPA_HighQ2");
-  mnv_plotter.error_summary_group_map["RPA"].push_back("RPA_LowQ2");
-
-  const bool do_fractional_uncertainty = true;
-  const bool do_cov_area_norm = false;
-  const bool include_stat_error = false;
-  const std::string do_fractional_uncertainty_str =
-      do_fractional_uncertainty ? std::string("Frac") : std::string("Abs");
-  const std::string do_cov_area_norm_str =
-      do_cov_area_norm ? std::string("CovAreaNorm") : std::string("");
-
-  mnv_plotter.DrawErrorSummary(hist, "TR", include_stat_error, true,
-                              0.0, do_cov_area_norm, "",
-                              do_fractional_uncertainty);
-  mnv_plotter.AddHistoTitle("Event Selection");
-  std::string plotname =
-      Form("ErrorSummary_%s_%s_%s", do_fractional_uncertainty_str.c_str(),
-           do_cov_area_norm_str.c_str(), label.c_str());
-  mnv_plotter.MultiPrint(&cE, plotname, "png");
-}
-
-void PlotCVAndError(PlotUtils::MnvH1D* h, std::string label)
-{
-  PlotUtils::MnvH1D* hist = (PlotUtils::MnvH1D*)h->Clone("hist");
-  PlotUtils::MnvPlotter mnv_plotter(PlotUtils::kCCNuPionIncStyle);
-  TCanvas cE("c1", "c1");
-  if (!gPad)
-    throw std::runtime_error("Need a TCanvas. Please make one first.");
-  PlotUtils::MnvH1D* datahist = new PlotUtils::MnvH1D(
-      "adsf", "", nbins, xmin, xmax);
-  bool statPlusSys = true;
-  int mcScale = 1.;
-  bool useHistTitles = false;
-  const PlotUtils::MnvH1D* bkgdHist = NULL;
-  const PlotUtils::MnvH1D* dataBkgdHist = NULL;
-  mnv_plotter.DrawDataMCWithErrorBand(datahist, hist, mcScale, "TL",
-                                     useHistTitles, NULL, NULL, false,
-                                     statPlusSys);
-  mnv_plotter.AddHistoTitle("Event Selection");
-  std::string plotname = Form("CV_w_err_%s", label.c_str());
-  mnv_plotter.MultiPrint(&cE, plotname, "png");
-  delete datahist;
-}
-
 //==============================================================================
 // Loop and Fill
 //==============================================================================
@@ -227,32 +114,26 @@ void LoopAndFillEventSelection(
         if(isSignal)
         {
           for(auto& study: studies) study->SelectedSignal(*universe, myevent, weight);
-        }
 
-        for(auto& var: vars)
-        {
-          //Cross section components
-          if(isSignal)
+          for(auto& var: vars)
           {
+            //Cross section components
             var->efficiencyNumerator->FillUniverse(universe, var->GetTrueValue(*universe), weight);
           }
 
-          //Fill other per-Variable histograms here
-          
-        }
-
-        for(auto& var: vars2D)
-        {
-          if(isSignal)
+          for(auto& var: vars2D)
           {
             var->efficiencyNumerator->FillUniverse(universe, var->GetTrueValueX(*universe), var->GetTrueValueY(*universe), weight);
           }
-	  else{
-	    int bkgd_ID = -1;
-	    if (universe->GetCurrent()==2)bkgd_ID=0;
-	    else bkgd_ID=1;
-	    (*var->m_backgroundHists)[bkgd_ID].FillUniverse(universe, var->GetRecoValueX(*universe), var->GetRecoValueY(*universe), weight);
-	  }
+        }
+        else
+        {
+          int bkgd_ID = -1;
+          if (universe->GetCurrent()==2)bkgd_ID=0;
+          else bkgd_ID=1;
+
+          for(auto& var: vars) (*var->m_backgroundHists)[bkgd_ID].FillUniverse(universe, var->GetRecoValue(*universe), weight);
+          for(auto& var: vars2D) (*var->m_backgroundHists)[bkgd_ID].FillUniverse(universe, var->GetRecoValueX(*universe), var->GetRecoValueY(*universe), weight);
         }
       } // End band's universe loop
     } // End Band loop
@@ -468,14 +349,17 @@ int main(const int argc, const char** argv)
 
   std::vector<double> dansPTBins = {0, 0.075, 0.15, 0.25, 0.325, 0.4, 0.475, 0.55, 0.7, 0.85, 1, 1.25, 1.5, 2.5, 4.5},
                       dansPzBins = {1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 15, 20, 40, 60};
-  //TODO: pT, pz?
+
   std::vector<Variable*> vars = {
     new Variable("pTmu", "p_{T, #mu} [GeV/c]", dansPTBins, &CVUniverse::GetMuonPT, &CVUniverse::GetMuonPTTrue),
-    new Variable("pzmu", "p_{||, #mu} [GeV/c]", dansPzBins, &CVUniverse::GetMuonPz, &CVUniverse::GetMuonPzTrue)
   };
 
   std::vector<Variable2D*> vars2D;
-  if(doCCQENuValidation) vars2D.push_back(new Variable2D(*vars[1], *vars[0]));
+  if(doCCQENuValidation)
+  {
+    vars.push_back(new Variable("pzmu", "p_{||, #mu} [GeV/c]", dansPzBins, &CVUniverse::GetMuonPz, &CVUniverse::GetMuonPzTrue));
+    vars2D.push_back(new Variable2D(*vars[1], *vars[0]));
+  }
   //TODO: Disable validation suite histograms too if the tree name is not CCQENu
 
   std::vector<Study*> studies;
@@ -518,7 +402,7 @@ int main(const int argc, const char** argv)
     mycuts.resetStats();
 
     CVUniverse::SetTruth(false);
-    LoopAndFillData(data, data_band,vars, vars2D, data_studies, mycuts);
+    LoopAndFillData(data, data_band, vars, vars2D, data_studies, mycuts);
     std::cout << "Data cut summary:\n" << mycuts << "\n";
 
     TFile* outDir = TFile::Open(OUT_FILE_NAME, "RECREATE");
@@ -528,26 +412,10 @@ int main(const int argc, const char** argv)
       return badOutputFile;
     }
 
-    for(auto& var: vars)
-    {
-      // You must always sync your HistWrappers before plotting them
-      var->SyncCVHistos();
-
-      //Categorized makes sure GetTitle() is the same as the labels you were looping over before
-      var->m_bestPionByGENIELabel->visit([](PlotUtils::HistWrapper<CVUniverse>& categ)
-                                         {
-                                           PlotCVAndError(categ.hist, categ.hist->GetTitle());
-                                           PlotErrorSummary(categ.hist, categ.hist->GetTitle());
-                                         });
-    }
-
     for(auto& study: studies) study->SaveOrDraw(*outDir);
     for(auto& var: vars) var->Write(*outDir);
     for(auto& var: vars2D) var->Write(*outDir);
 
-    //TODO: Remove this if we don't end up using it
-    /*TFile* dataDir = TFile::Open("DataStudyHists.root", "RECREATE");
-    for(auto& study: data_studies) study->SaveOrDraw(*dataDir);*/
     std::cout << "Success" << std::endl;
   }
   catch(const ROOT::exception& e)

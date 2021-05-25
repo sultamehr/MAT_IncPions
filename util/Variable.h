@@ -20,48 +20,42 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
     void InitializeMCHists(std::map<std::string, std::vector<CVUniverse*>>& mc_error_bands,
                            std::map<std::string, std::vector<CVUniverse*>>& truth_error_bands)
     {
-      //For example only.  Don't actually use GENIELabels as your backgrounds!
-      //You'd end up with a very model-dependent result, and Luke Pickering
-      //would frown on your paper ;)
-      std::map<int, std::string> GENIELabels = {{1, "QE"},
-                                                {8, "2p2h"},
-                                                {2, "RES"},
-                                                {3, "DIS"}};
- 
-      m_bestPionByGENIELabel = new util::Categorized<Hist, int>((GetName() + "_by_GENIE_Label").c_str(),
-                                                                GetName(), GENIELabels,
-                                                                GetNBins(), GetBinVec(), mc_error_bands);
 
-      efficiencyNumerator = new Hist((GetName() + "_efficiency_numerator").c_str(), GetName().c_str(), GetNBins(), GetBinVec(), mc_error_bands);
-      efficiencyDenominator = new Hist((GetName() + "_efficiency_denominator").c_str(), GetName().c_str(), GetNBins(), GetBinVec(), truth_error_bands);
+      std::map<int, std::string> BKGLabels = {{0, "NC_Bkg"},
+					       {1, "Bkg_Wrong_Sign"}};
+      
+      m_backgroundHists = new util::Categorized<Hist, int>((GetName() + "_by_BKG_Label").c_str(),
+							   GetName().c_str(), BKGLabels,
+							   GetBinVec(), mc_error_bands);
+
+      efficiencyNumerator = new Hist((GetName() + "_efficiency_numerator").c_str(), GetName().c_str(), GetBinVec(), mc_error_bands);
+      efficiencyDenominator = new Hist((GetName() + "_efficiency_denominator").c_str(), GetName().c_str(), GetBinVec(), truth_error_bands);
     }
 
     //Histograms to be filled
-    util::Categorized<Hist, int>* m_bestPionByGENIELabel;
-    Hist* dataHist;  
+    util::Categorized<Hist, int>* m_backgroundHists;
+    Hist* dataHist;
     Hist* efficiencyNumerator;
     Hist* efficiencyDenominator;
 
     void InitializeDATAHists(std::vector<CVUniverse*>& data_error_bands)
     {
-	std::vector<double> bins = GetBinVec();
         const char* name = GetName().c_str();
-  	dataHist = new Hist(Form("_data_%s", name), name, GetNBins(), bins, data_error_bands);
+  	dataHist = new Hist(Form("_data_%s", name), name, GetBinVec(), data_error_bands);
  
     }
 
     void Write(TFile& file)
     {
       SyncCVHistos();
-
       file.cd();
 
-      m_bestPionByGENIELabel->visit([&file](Hist& categ)
+      m_backgroundHists->visit([&file](Hist& categ)
                                     {
                                       categ.hist->SetDirectory(&file);
-                                      categ.hist->Write(); //TODO: Or let the TFile destructor do this the "normal" way?
+                                      categ.hist->Write(); //TODO: Or let the TFile destructor do this the "normal" way?                                                                                           
                                     });
-     
+
       if (dataHist->hist) {
 		dataHist->hist->SetDirectory(&file);
 		dataHist->hist->Write();
@@ -86,7 +80,7 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
     //Framework, this was implicitly done by the event loop.
     void SyncCVHistos()
     {
-      m_bestPionByGENIELabel->visit([](Hist& categ) { categ.SyncCVHistos(); });
+      m_backgroundHists->visit([](Hist& categ) { categ.SyncCVHistos(); });
       if(dataHist) dataHist->SyncCVHistos();
       if(efficiencyNumerator) efficiencyNumerator->SyncCVHistos();
       if(efficiencyDenominator) efficiencyDenominator->SyncCVHistos();
