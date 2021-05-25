@@ -40,17 +40,6 @@
 #include <algorithm>
 #include <numeric>
 
-namespace
-{
-  std::map<std::string, std::vector<std::string>> errorGroups = {{"CCQE Model and RPA", {"GENIE_CCQEPauliSupViaKF", "GENIE_NormCCQE", "GENIE_VecFFCCQEshape", "GENIE_MaCCQEshape", "RPA_LowQ2", "RPA_HighQ2"}},
-                                                                 {"FSI", {"GENIE_FrAbs_N", "GENIE_FrCEx_N", "GENIE_FrElas_N", "GENIE_FrInel_N", "GENIE_MFP_N", "GENIE_FrAbs_pi", "GENIE_FrCEx_pi", "GENIE_FrElas_pi", "GENIE_FrPiProd_pi", "GENIE_MFP_pi"}},
-                                                                 //{"RES Model", {"GENIE_MaRES", "GENIE_MvRES"}},
-                                                                 {"GEANT", {"GEANT_Neutron", "GEANT_Proton", "GEANT_Pion"}},
-                                                                 {"Flux", {"Flux"}},
-                                                                 //{"RPA_LowQ2", {"RPA_LowQ2"}},
-                                                                 {"2p2h Tune", {"Low_Recoil_2p2h_Tune"}}};
-}
-
 //Convince the STL to talk to TIter so I can use std::find_if()
 namespace std
 {
@@ -72,24 +61,8 @@ void Plot(PlotUtils::MnvH1D& hist, const std::string& stepName, const std::strin
   can.Print((prefix + "_" + stepName + ".png").c_str());
 
   //Uncertainty summary
-  //Put unused error bands into the "Other" category
-  const auto allBandNames = hist.GetVertErrorBandNames();
-  auto& other = ::errorGroups["Other"];
-  for(const auto& name: allBandNames)
-  {
-    if(std::find_if(::errorGroups.begin(), errorGroups.end(),
-                    [&name](const auto& group)
-                    { return std::find(group.second.begin(), group.second.end(), name) != group.second.end(); })
-       == ::errorGroups.end())
-    {
-      other.push_back(name);
-    }
-  }
-
-  //Set up a MnvPlotter
   PlotUtils::MnvPlotter plotter;
   plotter.ApplyStyle(PlotUtils::kCCQENuStyle);
-  //plotter.error_summary_group_map = ::errorGroups;
   plotter.axis_maximum = 0.4;
 
   plotter.DrawErrorSummary(&hist);
