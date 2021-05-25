@@ -21,10 +21,10 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
                            std::map<std::string, std::vector<CVUniverse*>>& truth_error_bands)
     {
 
-      std::map<int, std::string> BKGLabels = {{0, "NC_Bkg"},
-					       {1, "Bkg_Wrong_Sign"}};
+      std::map<int, std::string> BKGLabels = {{0, "NC"},
+					       {1, "Wrong_Sign"}};
       
-      m_backgroundHists = new util::Categorized<Hist, int>((GetName() + "_by_BKG_Label").c_str(),
+      m_backgroundHists = new util::Categorized<Hist, int>((GetName() + "_background").c_str(),
 							   GetName().c_str(), BKGLabels,
 							   GetBinVec(), mc_error_bands);
 
@@ -47,9 +47,7 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
 
     void InitializeDATAHists(std::vector<CVUniverse*>& data_error_bands)
     {
-        const char* name = GetName().c_str();
-  	dataHist = new Hist(Form("_data_%s", name), name, GetBinVec(), data_error_bands);
- 
+      dataHist = new Hist((GetName() + "_data").c_str(), GetName().c_str(), GetBinVec(), data_error_bands);
     }
 
     void Write(TFile& file)

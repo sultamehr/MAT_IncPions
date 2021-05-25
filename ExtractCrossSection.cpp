@@ -166,7 +166,7 @@ int main(const int argc, const char** argv)
   for(auto key: *dataFile->GetListOfKeys())
   {
     const std::string keyName = key->GetName();
-    const size_t endOfPrefix = keyName.find("_Signal");
+    const size_t endOfPrefix = keyName.find("_data");
     if(endOfPrefix != std::string::npos) crossSectionPrefixes.push_back(keyName.substr(0, endOfPrefix));
   }
 
@@ -180,16 +180,16 @@ int main(const int argc, const char** argv)
       auto flux = util::GetIngredient<PlotUtils::MnvH1D>(*mcFile, "reweightedflux_integrated", prefix);
       auto folded = util::GetIngredient<PlotUtils::MnvH1D>(*dataFile, "Signal", prefix);
       Plot(*folded, "data", prefix);
-      auto migration = util::GetIngredient<PlotUtils::MnvH2D>(*mcFile, "Migration", prefix);
-      auto effNum = util::GetIngredient<PlotUtils::MnvH1D>(*mcFile, "EfficiencyNumerator", prefix);
-      auto effDenom = util::GetIngredient<PlotUtils::MnvH1D>(*mcFile, "EfficiencyDenominator", prefix);
+      auto migration = util::GetIngredient<PlotUtils::MnvH2D>(*mcFile, "migration", prefix);
+      auto effNum = util::GetIngredient<PlotUtils::MnvH1D>(*mcFile, "efficiency_numerator", prefix);
+      auto effDenom = util::GetIngredient<PlotUtils::MnvH1D>(*mcFile, "efficiency_denominator", prefix);
       auto simEventRate = effDenom->Clone(); //Make a copy for later
 
       const auto fiducialFound = std::find_if(mcFile->GetListOfKeys()->begin(), mcFile->GetListOfKeys()->end(),
                                               [&prefix](const auto key)
                                               {
                                                 const std::string keyName = key->GetName();
-                                                const size_t fiducialEnd = keyName.find("_FiducialNucleons");
+                                                const size_t fiducialEnd = keyName.find("_fiducial_nucleons");
                                                 return (fiducialEnd != std::string::npos) && (prefix.find(keyName.substr(0, fiducialEnd)) != std::string::npos);
                                               });
       if(fiducialFound == mcFile->GetListOfKeys()->end()) throw std::runtime_error("Failed to find a number of nucleons that matches prefix " + prefix);
@@ -200,7 +200,7 @@ int main(const int argc, const char** argv)
       std::vector<PlotUtils::MnvH1D*> backgrounds;
       for(auto key: *mcFile->GetListOfKeys())
       {
-        if(std::string(key->GetName()).find(prefix + "_Background_") != std::string::npos)
+        if(std::string(key->GetName()).find(prefix + "_background_") != std::string::npos)
         {
           backgrounds.push_back(util::GetIngredient<PlotUtils::MnvH1D>(*mcFile, key->GetName()));
         }
