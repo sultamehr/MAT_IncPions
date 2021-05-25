@@ -49,7 +49,9 @@ include(${ROOT_USE_FILE})
 
 find_package(PlotUtils REQUIRED)
 include_directories(${PlotUtils_INCLUDE_DIR})
-message("Included PlotUtils from ${PlotUtils_INCLUDE_DIR}")
+
+find_package(UnfoldUtils REQUIRED)
+include_directories(${UnfoldUtils_INCLUDE_DIR})
 
 #Tell CMake to compile subdirectories before compiling main application
 add_subdirectory(playlists)
@@ -64,6 +66,10 @@ add_subdirectory(util)
 add_executable(runEventLoop runEventLoop.cpp)
 target_link_libraries(runEventLoop ${ROOT_LIBRARIES} util PlotUtils) #event cuts studies systematics)
 install(TARGETS runEventLoop DESTINATION bin)
+
+add_executable(ExtractCrossSection ExtractCrossSection.cpp)
+target_link_libraries(ExtractCrossSection ${ROOT_LIBRARIES} util PlotUtils UnfoldUtils)
+install(TARGETS ExtractCrossSection DESTINATION bin)
 
 configure_file(setup.sh.in setup_${PROJECT_NAME}.sh @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/setup_${PROJECT_NAME}.sh DESTINATION bin)
