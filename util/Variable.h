@@ -30,6 +30,8 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
 
       efficiencyNumerator = new Hist((GetName() + "_efficiency_numerator").c_str(), GetName().c_str(), GetBinVec(), mc_error_bands);
       efficiencyDenominator = new Hist((GetName() + "_efficiency_denominator").c_str(), GetName().c_str(), GetBinVec(), truth_error_bands);
+      selectedSignalReco = new Hist((GetName() + "_selected_signal_reco").c_str(), GetName().c_str(), GetBinVec(), mc_error_bands);
+      selectedMCReco = new Hist((GetName() + "_selected_mc_reco").c_str(), GetName().c_str(), GetBinVec(), mc_error_bands);
       migration = new PlotUtils::Hist2DWrapper<CVUniverse>((GetName() + "_migration").c_str(), GetName().c_str(), GetBinVec(), GetBinVec(), mc_error_bands);
     }
 
@@ -38,6 +40,9 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
     Hist* dataHist;
     Hist* efficiencyNumerator;
     Hist* efficiencyDenominator;
+    Hist* selectedSignalReco; //Effectively "true background subtracted" distribution for warping studies.
+                              //Also useful for a bakground breakdown plot that you'd use to start background subtraction studies.
+    Hist* selectedMCReco; //Treat the MC CV just like data for the closure test
     PlotUtils::Hist2DWrapper<CVUniverse>* migration;
 
     void InitializeDATAHists(std::vector<CVUniverse*>& data_error_bands)
@@ -80,6 +85,18 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
         migration->hist->SetDirectory(&file); 
         migration->hist->Write();
       }
+
+      if(selectedSignalReco)
+      {
+        selectedSignalReco->hist->SetDirectory(&file);
+        selectedSignalReco->hist->Write();
+      }
+
+      if(selectedMCReco)
+      {
+        selectedMCReco->hist->SetDirectory(&file);
+        selectedMCReco->hist->Write();
+      }
     }
 
     //Only call this manually if you Draw(), Add(), or Divide() plots in this
@@ -92,6 +109,8 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
       if(dataHist) dataHist->SyncCVHistos();
       if(efficiencyNumerator) efficiencyNumerator->SyncCVHistos();
       if(efficiencyDenominator) efficiencyDenominator->SyncCVHistos();
+      if(selectedSignalReco) selectedSignalReco->SyncCVHistos();
+      if(selectedMCReco) selectedMCReco->SyncCVHistos();
       if(migration) migration->SyncCVHistos();
     }
 };

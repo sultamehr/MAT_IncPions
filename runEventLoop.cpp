@@ -109,6 +109,8 @@ void LoopAndFillEventSelection(
         if (!michelcuts.isMCSelected(*universe, myevent, cvWeight).all()) continue; //all is another function that will later help me with sidebands
         const double weight = model.GetWeight(*universe, myevent); //Only calculate the per-universe weight for events that will actually use it.
 
+        for(auto& var: vars) var->selectedMCReco->FillUniverse(universe, var->GetRecoValue(*universe), weight); //"Fake data" for closure
+
         const bool isSignal = michelcuts.isSignal(*universe, weight);
 
         if(isSignal)
@@ -120,6 +122,7 @@ void LoopAndFillEventSelection(
             //Cross section components
             var->efficiencyNumerator->FillUniverse(universe, var->GetTrueValue(*universe), weight);
             var->migration->FillUniverse(universe, var->GetRecoValue(*universe), var->GetTrueValue(*universe), weight);
+            var->selectedSignalReco->FillUniverse(universe, var->GetRecoValue(*universe), weight); //Efficiency numerator in reco variables.  Usefule for warping studies.
           }
 
           for(auto& var: vars2D)
