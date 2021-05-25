@@ -119,6 +119,7 @@ void LoopAndFillEventSelection(
           {
             //Cross section components
             var->efficiencyNumerator->FillUniverse(universe, var->GetTrueValue(*universe), weight);
+            var->migration->FillUniverse(universe, var->GetRecoValue(*universe), var->GetTrueValue(*universe), weight);
           }
 
           for(auto& var: vars2D)

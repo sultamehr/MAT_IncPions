@@ -30,6 +30,7 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
 
       efficiencyNumerator = new Hist((GetName() + "_efficiency_numerator").c_str(), GetName().c_str(), GetBinVec(), mc_error_bands);
       efficiencyDenominator = new Hist((GetName() + "_efficiency_denominator").c_str(), GetName().c_str(), GetBinVec(), truth_error_bands);
+      migration = new PlotUtils::Hist2DWrapper<CVUniverse>((GetName() + "_migration").c_str(), GetName().c_str(), GetBinVec(), GetBinVec(), mc_error_bands);
     }
 
     //Histograms to be filled
@@ -37,6 +38,7 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
     Hist* dataHist;
     Hist* efficiencyNumerator;
     Hist* efficiencyDenominator;
+    PlotUtils::Hist2DWrapper<CVUniverse>* migration;
 
     void InitializeDATAHists(std::vector<CVUniverse*>& data_error_bands)
     {
@@ -72,6 +74,12 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
         efficiencyDenominator->hist->SetDirectory(&file);
         efficiencyDenominator->hist->Write();
       }
+
+      if(migration)
+      {
+        migration->hist->SetDirectory(&file); 
+        migration->hist->Write();
+      }
     }
 
     //Only call this manually if you Draw(), Add(), or Divide() plots in this
@@ -84,6 +92,7 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
       if(dataHist) dataHist->SyncCVHistos();
       if(efficiencyNumerator) efficiencyNumerator->SyncCVHistos();
       if(efficiencyDenominator) efficiencyDenominator->SyncCVHistos();
+      if(migration) migration->SyncCVHistos();
     }
 };
 
