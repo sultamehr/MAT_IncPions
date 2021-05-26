@@ -73,13 +73,25 @@ bool isQELikeSignal( ChainWrapper& chw, int entry ) {
   }
 };
 
-void runMinModDepCCQEXSec()
+int main(const int argc, const char** argv)
 {
   TH1::AddDirectory(false);
+
+  //Read a playlist file from the command line
+  if(argc != 2)
+  {
+    std::cerr << "Expected exactly 1 command line argument, but got " << argc - 1 << ".\n\n"
+              << "USAGE: runXSecLooper <MCPlaylist.txt>\n\n"
+              << "MCPlaylist.txt shall contain one .root file per line that has a Truth tree in it.\n"
+              << "This program returns 0 when it suceeds.  It produces a .root file named " "\n";
+    return 1;
+  }
+
+  const std::string playlistFile = argv[1]; //argv[0] is the name of the executable
+
   // Create the XSecLooper and tell it the input files
   // Inputs should be the merged ntuples:
-  //  XSecLooper loop("/pnfs/minerva/persistent/users/mateusc/CCQENu_v21r1p1_2019_minervame1D_MC_ntuples_ImprovedMichelUpdated_NEW_merged/CCQENu_mc_AnaTuple_*_Playlist.root");
-    XSecLooper loop("/pnfs/minerva/persistent/users/drut1186/CCQENu_Anatuples/MuonKludge_SmallerMuonScaleUnc_ContainmentAndProtonVariables/MC_Merged/minervame1Lpass1/*.root");
+  XSecLooper loop(playlistFile.c_str());
 
   // Tell the XSecLooper which neutrino type we're considering (mandatory)
   loop.setNuPDG(14);
@@ -87,90 +99,30 @@ void runMinModDepCCQEXSec()
   // Setting the number of Universes in the GENIE error band (default 100, put 0 if you do not want to include the universes)
   loop.setNumUniv(0); 
 
-  // Add the differential cross section dsigma/dpTdpZ
-
+  // Add the differential cross section dsigma/ds_dpT
   double pt_edges[] = { 0.0, 0.075, 0.15, 0.25, 0.325, 0.4, 0.475, 0.55, 0.7, 0.85, 1.0, 1.25, 1.5, 2.5 };
   int pt_nbins = 13; 
-  double q2_edges[] =  {0, 0.00625, 0.0125, 0.025, 0.0375, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 1.2, 2.0, 4.0, 6.0, 8.0,10.0};
-  int q2_nbins = 19;
-  double pz_edges[] = { 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 8.0, 10.0, 15.0, 20.0 };
-  int pz_nbins = 12;
  
-  vector<double> recoil3Dbins;
-  vector<double> pt3Dbins;
-  vector<double> pz3Dbins;
-
-  pt3Dbins.push_back(0.0);
-  //  pt3Dbins.push_back(0.075);//added ME
-  pt3Dbins.push_back(0.15);
-  pt3Dbins.push_back(0.25);//added ME
-  pt3Dbins.push_back(0.4);
-  pt3Dbins.push_back(0.7);//added ME
-  pt3Dbins.push_back(1.0);
-  //  pt3Dbins.push_back(1.5);//added ME
-  pt3Dbins.push_back(2.5);
-
-  pz3Dbins.push_back(1.5);
-  pz3Dbins.push_back(3.5);//added ME
-  pz3Dbins.push_back(8.0);
-  pz3Dbins.push_back(20.0);
-
-  for(int i=0;i<10;i++)recoil3Dbins.push_back(i*40);
-  for(int i=0;i<4;i++)recoil3Dbins.push_back(i*200+400);
-
-
-  std::vector<std::vector<double> > full3D;
-  full3D.push_back(recoil3Dbins);
-  full3D.push_back(pt3Dbins);
-  full3D.push_back(pz3Dbins);
-
-  cout << pt3Dbins.size() << endl;
-  int pzrecoil_nbins = (recoil3Dbins.size()+1)*(pz3Dbins.size()+1);
-  double pzrecoil_edges[pzrecoil_nbins];
-  double pt3D_edges[7];
-  for(int i=0;i<pzrecoil_nbins;i++){
-    pzrecoil_edges[i] = i;
-  }
-  for(int i=0;i<7;i++)pt3D_edges[i]=pt3Dbins[i];
-
   // Flux-integrated over the range 0.0 to 100.0 GeV
-  MinModDepCCQEXSec* ds_dpTdpZ = new MinModDepCCQEXSec("ds_dpTdpZ");
-  ds_dpTdpZ->setBinEdges(pz_nbins, pz_edges, pt_nbins, pt_edges);
-  ds_dpTdpZ->setVariable(XSec::kPZLep, XSec::kPTLep);
-  ds_dpTdpZ->setIsFluxIntegrated(true);
-  ds_dpTdpZ->setDimension(2);
-  ds_dpTdpZ->setFluxIntLimits(0.0, 100.0);
-  ds_dpTdpZ->setNormalizationType(XSec::kPerNucleon);  
-  loop.addXSec(ds_dpTdpZ);
-  MinModDepCCQEXSec* ds_dpTdpZdRecoil = new MinModDepCCQEXSec("ds_dpTdpZdRecoil");
-  ds_dpTdpZdRecoil->setBinEdges(pzrecoil_nbins-1, pzrecoil_edges, pt3Dbins.size()-1,&pt3Dbins[0]);
-  ds_dpTdpZdRecoil->setVariable(XSec::kPZRecoil, XSec::kPTLep);
-  ds_dpTdpZdRecoil->setIsFluxIntegrated(true);
-  ds_dpTdpZdRecoil->setDimension(2);
-  ds_dpTdpZdRecoil->setFluxIntLimits(0.0, 100.0);
-  ds_dpTdpZdRecoil->setNormalizationType(XSec::kPerNucleon);  
-  ds_dpTdpZdRecoil->setHyperDim(full3D,0);
-  loop.addXSec(ds_dpTdpZdRecoil);
-  
+  MinModDepCCQEXSec* ds_dpT = new MinModDepCCQEXSec("pT");
+  ds_dpT->setBinEdges(pt_nbins, pt_edges);
+  ds_dpT->setVariable(XSec::kPTLep);
+  ds_dpT->setIsFluxIntegrated(true);
+  ds_dpT->setDimension(1);
+  ds_dpT->setFluxIntLimits(0.0, 100.0);
+  ds_dpT->setNormalizationType(XSec::kPerNucleon);  
+  loop.addXSec(ds_dpT);
 
   loop.runLoop();
 
   // Get the output histograms and save them to file
-  string geniefilename =  "GENIEXSECEXTRACT_CCQENuInclusive_me1L.root";
+  string geniefilename =  "GENIEXSECEXTRACT_" + playlistFile + ".root";
   TFile fout(geniefilename.c_str(), "RECREATE");
-  for(uint i=0; i<loop.getXSecs().size(); ++i){
-    if(loop.getXSecs()[i]->getDimension()==1){ 
-      loop.getXSecs()[i]->getXSecHist()->Write();
-      loop.getXSecs()[i]->getEvRateHist()->Write();}
-    else
-      loop.getXSecs()[i]->get2DXSecHist()->Write();
+  for(uint i=0; i<loop.getXSecs().size(); ++i)
+  {
+    loop.getXSecs()[i]->getXSecHist()->Write();
+    loop.getXSecs()[i]->getEvRateHist()->Write();
   }
-}
 
-int main()
-{
-  TH1::AddDirectory(false);
-  runMinModDepCCQEXSec();
   return 0;
 }
-
