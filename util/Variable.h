@@ -56,7 +56,15 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
       dataHist = new Hist((GetName() + "_data").c_str(), GetName().c_str(), GetBinVec(), data_error_bands);
     }
 
-    void Write(TFile& file)
+    void WriteData(TFile& file)
+    {
+      if (dataHist->hist) {
+                dataHist->hist->SetDirectory(&file);
+                dataHist->hist->Write();
+      }
+    }
+
+    void WriteMC(TFile& file)
     {
       SyncCVHistos();
       file.cd();
@@ -66,11 +74,6 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
                                       categ.hist->SetDirectory(&file);
                                       categ.hist->Write(); //TODO: Or let the TFile destructor do this the "normal" way?                                                                                           
                                     });
-
-      if (dataHist->hist) {
-		dataHist->hist->SetDirectory(&file);
-		dataHist->hist->Write();
-      }
 
       if(efficiencyNumerator)
       {
@@ -99,7 +102,7 @@ class Variable: public PlotUtils::VariableBase<CVUniverse>
       if(selectedMCReco)
       {
         selectedMCReco->hist->SetDirectory(&file);
-        selectedMCReco->hist->Write();
+        selectedMCReco->hist->Write((GetName() + "_data").c_str()); //Make this histogram look just like the data for closure tests
       }
     }
 

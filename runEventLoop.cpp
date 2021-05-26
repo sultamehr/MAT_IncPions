@@ -1,4 +1,5 @@
-#define OUT_FILE_NAME "runEventLoop.root"
+#define MC_OUT_FILE_NAME "runEventLoopMC.root"
+#define DATA_OUT_FILE_NAME "runEventLoopData.root"
 
 #define USAGE \
 "\n*** USAGE ***\n"\
@@ -12,10 +13,10 @@
 "entries will be treated like data, and the second playlist's entries must\n"\
 "have the \"Truth\" tree to use for calculating the efficiency denominator.\n\n"\
 "*** Output ***\n"\
-"Produces a single " OUT_FILE_NAME " file with all histograms needed for the\n"\
-"ExtractCrossSection program also built by this package.  You'll need a\n"\
-".rootlogon.C that loads ROOT object definitions from PlotUtils to access\n"\
-"systematics information from these files.\n\n"\
+"Produces a two files, " MC_OUT_FILE_NAME " and " DATA_OUT_FILE_NAME ", with\n"\
+"all histograms needed for the ExtractCrossSection program also built by this\n"\
+"package.  You'll need a .rootlogon.C that loads ROOT object definitions from\n"\
+"PlotUtils to access systematics information from these files.\n\n"\
 "*** Return Codes ***\n"\
 "0 indicates success.  All histograms are valid only in this case.  Any other\n"\
 "return code indicates that histograms should not be used.  Error messages\n"\
@@ -404,29 +405,26 @@ int main(const int argc, const char** argv)
     LoopAndFillData(options.m_data, data_band, vars, vars2D, data_studies, mycuts);
     std::cout << "Data cut summary:\n" << mycuts << "\n";
 
-    TFile* outDir = TFile::Open(OUT_FILE_NAME, "RECREATE");
-    if(!outDir)
+    TFile* mcOutDir = TFile::Open(MC_OUT_FILE_NAME, "RECREATE");
+    if(!mcOutDir)
     {
-      std::cerr << "Failed to open a file named " << OUT_FILE_NAME << " in the current directory for writing histograms.\n";
+      std::cerr << "Failed to open a file named " << MC_OUT_FILE_NAME << " in the current directory for writing histograms.\n";
       return badOutputFile;
     }
 
-    for(auto& study: studies) study->SaveOrDraw(*outDir);
-    for(auto& var: vars) var->Write(*outDir);
-    for(auto& var: vars2D) var->Write(*outDir);
+    for(auto& study: studies) study->SaveOrDraw(*mcOutDir);
+    for(auto& var: vars) var->WriteMC(*mcOutDir);
+    for(auto& var: vars2D) var->Write(*mcOutDir);
 
-    //Other metadata needed to extract a cross section from this file
-    //POT scale
-    auto mcPOT = new TParameter<double>("MCPOTUsed", options.m_mc_pot);
+    //Protons On Target
+    auto mcPOT = new TParameter<double>("POTUsed", options.m_mc_pot);
     mcPOT->Write();
-    auto dataPOT = new TParameter<double>("DataPOTUsed", options.m_data_pot);
-    dataPOT->Write();
 
     //Flux integral
     assert(error_bands["cv"].size() == 1 && "List of error bands must contain a universe named \"cv\" for the flux integral.");
-    assert(!vars.empty() && "No Variables from which to pick a flux integral template.");
-    util::GetFluxIntegral(*error_bands["cv"].front(), vars.front()->efficiencyNumerator->hist)->Write();
 
+    for(const auto& var: vars) util::GetFluxIntegral(*error_bands["cv"].front(), var->efficiencyNumerator->hist)->Write((var->GetName() + "_reweightedflux_integrated").c_str());
+                                                                                                                                
     //Number of nucleons in the fiducial volume
     PlotUtils::TargetUtils targetInfo;
     //TODO: Make sure minZ, maxZ, and apothem match signal definition somehow
@@ -434,6 +432,19 @@ int main(const int argc, const char** argv)
     //Always use MC number of nucleons for cross section
     auto nNucleons = new TParameter<double>("NNucleons", targetInfo.GetTrackerNNucleons(minZ, maxZ, true, apothem));
     nNucleons->Write();
+
+    TFile* dataOutDir = TFile::Open(DATA_OUT_FILE_NAME, "RECREATE");
+    if(!dataOutDir)
+    {
+      std::cerr << "Failed to open a file named " << DATA_OUT_FILE_NAME << " in the current directory for writing histograms.\n";
+      return badOutputFile;
+    }
+
+    for(auto& var: vars) var->WriteData(*dataOutDir);
+
+    //Protons On Target
+    auto dataPOT = new TParameter<double>("POTUsed", options.m_data_pot);
+    dataPOT->Write();
 
     std::cout << "Success" << std::endl;
   }
