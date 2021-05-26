@@ -89,7 +89,7 @@ void LoopAndFillEventSelection(
   std::cout << "Starting MC reco loop...\n";
   for (int i=0; i<chain->GetEntries(); ++i)
   {
-    if(i%1000==0) std::cout << (i/1000) << "k\n" << std::flush;
+    if(i%1000==0) std::cout << i << "\r" << std::flush;
 
     MichelEvent cvEvent;
     cvUniv->SetEntry(i);
@@ -163,7 +163,7 @@ void LoopAndFillData( PlotUtils::ChainWrapper* data,
   for (auto universe : data_band) {
     for (int i=0; i<data->GetEntries(); ++i) {
       universe->SetEntry(i);
-      if(i%1000==0) std::cout << (i/1000) << "k\n" << std::flush;
+      if(i%1000==0) std::cout << i << "\r" << std::flush;
       MichelEvent myevent; 
       if (!michelcuts.isDataSelected(*universe, myevent).all()) continue;
 
@@ -196,7 +196,7 @@ void LoopAndFillEffDenom( PlotUtils::ChainWrapper* truth,
   std::cout << "Starting efficiency denominator loop...\n";
   for (int i=0; i<truth->GetEntries(); ++i)
   {
-    if(i%1000==0) std::cout << (i/1000) << "k\n" << std::flush;
+    if(i%1000==0) std::cout << i << "\r" << std::flush;
 
     MichelEvent cvEvent;
     cvUniv->SetEntry(i);
