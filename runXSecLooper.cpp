@@ -17,24 +17,8 @@ public:
   {
   };
 
-bool isQELikeSignal( ChainWrapper& chw, int entry ) {
-
-  int genie_n_muons         = 0;
-  int genie_n_mesons        = 0;
-  int genie_n_heavy_baryons_plus_pi0s = 0;
-  int genie_n_photons       = 0;
-
-  int nparticles = (int)chw.GetValue("mc_nFSPart",entry);
-  for(int i = 0; i < nparticles; ++i) {
-     int pdg = (int)chw.GetValue("mc_FSPartPDG",entry,i);
-     double energy = (double)chw.GetValue("mc_FSPartE",entry,i);
-
-     if( abs(pdg) == 13 ) genie_n_muons++;
-    else if( pdg == 22 && energy > 10 ) genie_n_photons++;
-    else if( abs(pdg) == 211 || abs(pdg) == 321 || abs(pdg) == 323 || pdg == 111 || pdg == 130 || pdg == 310 || pdg == 311 || pdg == 313 ) genie_n_mesons++;
-    else if( pdg == 3112 || pdg == 3122 || pdg == 3212 || pdg == 3222 || pdg == 4112 || pdg == 4122 || pdg == 4212 || pdg == 4222 || pdg == 411 || pdg == 421 || pdg == 111 ) genie_n_heavy_baryons_plus_pi0s++;
-  }
-
+bool isCCInclusiveSignal( ChainWrapper& chw, int entry )
+{
   double theta              = 0.;
   double true_muon_px   = (double)chw.GetValue("mc_primFSLepton",entry,0)/1000;
   double true_muon_py   = (double)chw.GetValue("mc_primFSLepton",entry,1)/1000;
@@ -46,17 +30,7 @@ bool isQELikeSignal( ChainWrapper& chw, int entry ) {
   theta = acos( pzprime / sqrt(pSquare) );
   theta *= 180./3.14159;
 
-  // CCQE-like: 1 muon (from neutrino) and no mesons/heavy baryons in final state. 
-  // Any number of final state nucleons (protons or neutrons) allowed. 
-  // Photons from nuclear de-excitation are kept. These tend to be < 10 MeV. Events with photons from other sources are excluded. 
-  // GENIE simulates nuclear de-excitations only for Oxygen atoms at present. 
-  if(!chw.GetValue("truth_is_fiducial",entry)) return false;
-  // if( genie_n_muons         == 1 &&
-  //     genie_n_mesons        == 0 &&
-  //     genie_n_heavy_baryons_plus_pi0s == 0 &&
-  //     genie_n_photons       == 0 &&
-  //     theta <=20.0 &&
-  //     pzprime >= 1.5) return true;
+  //if(!chw.GetValue("truth_is_fiducial",entry)) return false; //Doesn't work for MasterAnaDev tuples.  What does this even mean in the targets anyway? :(
   if( pzprime >= 1.5 && theta <= 20.0 ) return true;
   return false;
 
@@ -67,7 +41,7 @@ bool isQELikeSignal( ChainWrapper& chw, int entry ) {
   {
     if((int)chw.GetValue("mc_incoming", entry)!=14) return false;
     if((int)chw.GetValue("mc_current", entry)!=1) return false;
-    if(!isQELikeSignal  ( chw, entry ) ) return false;
+    if(!isCCInclusiveSignal  ( chw, entry ) ) return false;
     
     return true;
   }
@@ -75,15 +49,13 @@ bool isQELikeSignal( ChainWrapper& chw, int entry ) {
 
 int main(const int argc, const char** argv)
 {
-  TH1::AddDirectory(false);
-
   //Read a playlist file from the command line
   if(argc != 2)
   {
     std::cerr << "Expected exactly 1 command line argument, but got " << argc - 1 << ".\n\n"
               << "USAGE: runXSecLooper <MCPlaylist.txt>\n\n"
               << "MCPlaylist.txt shall contain one .root file per line that has a Truth tree in it.\n"
-              << "This program returns 0 when it suceeds.  It produces a .root file named " "\n";
+              << "This program returns 0 when it suceeds.  It produces a .root file with GENIEXSECEXTRACT in its name.\n";
     return 1;
   }
 
@@ -98,6 +70,7 @@ int main(const int argc, const char** argv)
 
   // Setting the number of Universes in the GENIE error band (default 100, put 0 if you do not want to include the universes)
   loop.setNumUniv(0); 
+  loop.setFiducial(5980, 8422);
 
   // Add the differential cross section dsigma/ds_dpT
   double pt_edges[] = { 0.0, 0.075, 0.15, 0.25, 0.325, 0.4, 0.475, 0.55, 0.7, 0.85, 1.0, 1.25, 1.5, 2.5 };
@@ -111,6 +84,7 @@ int main(const int argc, const char** argv)
   ds_dpT->setDimension(1);
   ds_dpT->setFluxIntLimits(0.0, 100.0);
   ds_dpT->setNormalizationType(XSec::kPerNucleon);  
+  ds_dpT->setUniverses(0); //default value, put 0 if you do not want universes to be included.
   loop.addXSec(ds_dpT);
 
   loop.runLoop();
