@@ -71,7 +71,7 @@ add_executable(ExtractCrossSection ExtractCrossSection.cpp)
 target_link_libraries(ExtractCrossSection ${ROOT_LIBRARIES} util PlotUtils UnfoldUtils)
 install(TARGETS ExtractCrossSection DESTINATION bin)
 
-install(FILES runTransWarp.sh DESTINATION bin)
+install(FILES runTransWarp.sh PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION bin)
 
 configure_file(setup.sh.in setup_${PROJECT_NAME}.sh @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/setup_${PROJECT_NAME}.sh DESTINATION bin)
