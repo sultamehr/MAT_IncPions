@@ -53,6 +53,9 @@ include_directories(${PlotUtils_INCLUDE_DIR})
 find_package(UnfoldUtils REQUIRED)
 include_directories(${UnfoldUtils_INCLUDE_DIR})
 
+find_package(GENIEXSecExtract REQUIRED)
+include_directories(${GENIEXSecExtract_INCLUDE_DIR})
+
 #Tell CMake to compile subdirectories before compiling main application
 add_subdirectory(playlists)
 add_subdirectory(util)
@@ -70,6 +73,10 @@ install(TARGETS runEventLoop DESTINATION bin)
 add_executable(ExtractCrossSection ExtractCrossSection.cpp)
 target_link_libraries(ExtractCrossSection ${ROOT_LIBRARIES} util PlotUtils UnfoldUtils)
 install(TARGETS ExtractCrossSection DESTINATION bin)
+
+add_executable(runXSecLooper runXSecLooper.cpp)
+target_link_libraries(runXSecLooper ${ROOT_LIBRARIES} PlotUtils GENIEXSecExtract)
+install(TARGETS runXSecLooper DESTINATION bin)
 
 install(FILES runTransWarp.sh PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION bin)
 
