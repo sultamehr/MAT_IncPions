@@ -178,7 +178,7 @@ int main(const int argc, const char** argv)
     try
     {
       auto flux = util::GetIngredient<PlotUtils::MnvH1D>(*mcFile, "reweightedflux_integrated", prefix);
-      auto folded = util::GetIngredient<PlotUtils::MnvH1D>(*dataFile, "Signal", prefix);
+      auto folded = util::GetIngredient<PlotUtils::MnvH1D>(*dataFile, "data", prefix);
       Plot(*folded, "data", prefix);
       auto migration = util::GetIngredient<PlotUtils::MnvH2D>(*mcFile, "migration", prefix);
       auto effNum = util::GetIngredient<PlotUtils::MnvH1D>(*mcFile, "efficiency_numerator", prefix);

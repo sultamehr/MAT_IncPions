@@ -405,6 +405,7 @@ int main(const int argc, const char** argv)
     LoopAndFillData(options.m_data, data_band, vars, vars2D, data_studies, mycuts);
     std::cout << "Data cut summary:\n" << mycuts << "\n";
 
+    //Write MC results
     TFile* mcOutDir = TFile::Open(MC_OUT_FILE_NAME, "RECREATE");
     if(!mcOutDir)
     {
@@ -420,19 +421,21 @@ int main(const int argc, const char** argv)
     auto mcPOT = new TParameter<double>("POTUsed", options.m_mc_pot);
     mcPOT->Write();
 
-    //Flux integral
+    PlotUtils::TargetUtils targetInfo;
     assert(error_bands["cv"].size() == 1 && "List of error bands must contain a universe named \"cv\" for the flux integral.");
 
-    for(const auto& var: vars) util::GetFluxIntegral(*error_bands["cv"].front(), var->efficiencyNumerator->hist)->Write((var->GetName() + "_reweightedflux_integrated").c_str());
-                                                                                                                                
-    //Number of nucleons in the fiducial volume
-    PlotUtils::TargetUtils targetInfo;
-    //TODO: Make sure minZ, maxZ, and apothem match signal definition somehow
-    const double minZ = 5980, maxZ = 8422, apothem = 850; //All in mm
-    //Always use MC number of nucleons for cross section
-    auto nNucleons = new TParameter<double>("NNucleons", targetInfo.GetTrackerNNucleons(minZ, maxZ, true, apothem));
-    nNucleons->Write();
+    for(const auto& var: vars)
+    {
+      //Flux integral
+      util::GetFluxIntegral(*error_bands["cv"].front(), var->efficiencyNumerator->hist)->Write((var->GetName() + "_reweightedflux_integrated").c_str());
+      //TODO: Make sure minZ, maxZ, and apothem match signal definition somehow
+      const double minZ = 5980, maxZ = 8422, apothem = 850; //All in mm
+      //Always use MC number of nucleons for cross section
+      auto nNucleons = new TParameter<double>((var->GetName() + "_fiducial_nucleons").c_str(), targetInfo.GetTrackerNNucleons(minZ, maxZ, true, apothem));
+      nNucleons->Write();
+    }
 
+    //Write data results
     TFile* dataOutDir = TFile::Open(DATA_OUT_FILE_NAME, "RECREATE");
     if(!dataOutDir)
     {
