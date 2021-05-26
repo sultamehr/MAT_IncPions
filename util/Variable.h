@@ -1,9 +1,15 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
 
+//Includes from this package
+#include "event/CVUniverse.h"
 #include "util/SafeROOTName.h"
-#include "PlotUtils/VariableBase.h"
 #include "util/Categorized.h"
+
+//PlotUtils includes
+#include "PlotUtils/VariableBase.h"
+#include "PlotUtils/HistWrapper.h"
+#include "PlotUtils/Hist2DWrapper.h"
 
 class Variable: public PlotUtils::VariableBase<CVUniverse>
 {

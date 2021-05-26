@@ -38,11 +38,21 @@ enum ErrorCodes
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Woverloaded-virtual"
 
+//Includes from this package
 #include "event/CVUniverse.h"
 #include "event/MichelEvent.h"
 #include "systematics/Systematics.h"
 #include "cuts/MaxPzMu.h"
+#include "util/GetMnvTunev1.h"
+#include "util/Variable.h"
+#include "util/Variable2D.h"
+#include "util/GetFluxIntegral.h"
+#include "cuts/SignalDefinition.h"
+#include "cuts/q3RecoCut.h"
+#include "studies/Study.h"
+//#include "Binning.h" //TODO: Fix me
 
+//PlotUtils includes
 #include "PlotUtils/makeChainWrapper.h"
 #include "PlotUtils/HistWrapper.h"
 #include "PlotUtils/Hist2DWrapper.h"
@@ -51,18 +61,14 @@ enum ErrorCodes
 #include "PlotUtils/cuts/CCInclusiveCuts.h"
 #include "PlotUtils/cuts/CCInclusiveSignal.h"
 #include "PlotUtils/CrashOnROOTMessage.h" //Sets up ROOT's debug callbacks by itself
-#include "util/Categorized.h"
 #include "PlotUtils/Cutter.h"
-
-#include "util/GetMnvTunev1.h"
-
-#include "util/Variable.h"
-#include "util/Variable2D.h"
-#include "cuts/SignalDefinition.h"
-#include "cuts/q3RecoCut.h"
-#include "studies/Study.h"
-//#include "Binning.h" //TODO: Fix me
+#include "PlotUtils/TargetUtils.h"
 #pragma GCC diagnostic pop
+
+//ROOT includes
+#include "TParameter.h"
+
+//c++ includes
 #include <iostream>
 
 //==============================================================================
@@ -144,7 +150,6 @@ void LoopAndFillEventSelection(
   } //End entries loop
   std::cout << "Finished MC reco loop.\n";
 }
-
 
 void LoopAndFillData( PlotUtils::ChainWrapper* data,
 			        std::vector<CVUniverse*> data_band,
@@ -311,10 +316,6 @@ int main(const int argc, const char** argv)
   const std::string mc_file_list = argv[2],
                     data_file_list = argv[1];
 
-  // Make a chain of events
-  /*const std::string mc_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_MC_Inextinguishable_merged.txt"); //"/etc/playlists/USBTestMC.txt");
-  const std::string data_file_list(INSTALL_DIR "/etc/playlists/CCQENu_minervame1A_DATA_Inextinguishable_merged.txt"); //"/etc/playlists/USBTestData.txt");*/
-
   //Check that necessary TTrees exist in the first file of mc_file_list and data_file_list
   std::string reco_tree_name;
   if(!inferRecoTreeNameAndCheckTreeNames(mc_file_list, data_file_list, reco_tree_name))
@@ -326,30 +327,24 @@ int main(const int argc, const char** argv)
   const bool doCCQENuValidation = (reco_tree_name == "CCQENu");
   if(doCCQENuValidation) std::cerr << "Detected that tree name is CCQENu.  Making validation histograms and disabling systematics.\n";
 
-  //TODO: makeChainWrapperPtr() doesn't let me react to failing to read files.
-  PlotUtils::ChainWrapper* chain = makeChainWrapperPtr(mc_file_list, reco_tree_name);
-  PlotUtils::ChainWrapper* truth = makeChainWrapperPtr(mc_file_list, "Truth");
-  PlotUtils::ChainWrapper* data = makeChainWrapperPtr(data_file_list, reco_tree_name);
-
-  const std::string plist_string("minervame1a"); //TODO: Infer this from the files somehow?
-  const bool do_truth = false;
   const bool is_grid = false;
+  PlotUtils::MacroUtil options(reco_tree_name, mc_file_list, data_file_list, "minervame1A", true, is_grid);
+
   // You're required to make some decisions
   PlotUtils::MinervaUniverse::SetNuEConstraint(true);
-  PlotUtils::MinervaUniverse::SetPlaylist("minervame1A"); //TODO: Infer this from the files somehow?
+  PlotUtils::MinervaUniverse::SetPlaylist(options.m_plist_string); //TODO: Infer this from the files somehow?
   PlotUtils::MinervaUniverse::SetAnalysisNuPDG(14);
-  PlotUtils::MinervaUniverse::SetNonResPiReweight(true);
-  PlotUtils::MinervaUniverse::SetDeuteriumGeniePiTune(false);
+  PlotUtils::MinervaUniverse::SetNFluxUniverses(100);
 
   // Make a map of systematic universes
   // Leave out systematics when making validation histograms
   //TODO: This might not work with the NSF Validation Suite.  I think it uses CCQENu tuples.
   std::map< std::string, std::vector<CVUniverse*> > error_bands;
-  if(!doCCQENuValidation) error_bands = GetStandardSystematics(chain);
-  error_bands["cv"] = {new CVUniverse(chain)};
+  if(!doCCQENuValidation) error_bands = GetStandardSystematics(options.m_mc);
+  error_bands["cv"] = {new CVUniverse(options.m_mc)};
   std::map< std::string, std::vector<CVUniverse*> > truth_bands;
-  if(!doCCQENuValidation) truth_bands = GetStandardSystematics(truth);
-  truth_bands["cv"] = {new CVUniverse(truth)};
+  if(!doCCQENuValidation) truth_bands = GetStandardSystematics(options.m_truth);
+  truth_bands["cv"] = {new CVUniverse(options.m_truth)};
 
   std::vector<double> dansPTBins = {0, 0.075, 0.15, 0.25, 0.325, 0.4, 0.475, 0.55, 0.7, 0.85, 1, 1.25, 1.5, 2.5, 4.5},
                       dansPzBins = {1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 15, 20, 40, 60};
@@ -368,12 +363,8 @@ int main(const int argc, const char** argv)
 
   std::vector<Study*> studies;
 
-  //Creating the single Data universe 
-  //TODO: Doesn't this make another set of ChainWrappers?
-  PlotUtils::MacroUtil util(reco_tree_name, mc_file_list, data_file_list,
-                    plist_string, do_truth, is_grid);
   //TODO: I should be able to simplify setting up the data CV a lot
-  CVUniverse* data_universe = new CVUniverse(util.m_data);
+  CVUniverse* data_universe = new CVUniverse(options.m_data);
   std::vector<CVUniverse*> data_band = {data_universe};
   std::map<std::string, std::vector<CVUniverse*> > data_error_bands;
   data_error_bands["cv"] = data_band;
@@ -399,14 +390,15 @@ int main(const int argc, const char** argv)
   try
   {
     CVUniverse::SetTruth(false);
-    LoopAndFillEventSelection(chain, error_bands, vars, vars2D, studies, mycuts, model);
+    LoopAndFillEventSelection(options.m_mc, error_bands, vars, vars2D, studies, mycuts, model);
     CVUniverse::SetTruth(true);
-    LoopAndFillEffDenom(truth, truth_bands, vars, vars2D, mycuts, model);
+    LoopAndFillEffDenom(options.m_truth, truth_bands, vars, vars2D, mycuts, model);
+    options.PrintMacroConfiguration(argv[0]);
     std::cout << "MC cut summary:\n" << mycuts << "\n";
     mycuts.resetStats();
 
     CVUniverse::SetTruth(false);
-    LoopAndFillData(data, data_band, vars, vars2D, data_studies, mycuts);
+    LoopAndFillData(options.m_data, data_band, vars, vars2D, data_studies, mycuts);
     std::cout << "Data cut summary:\n" << mycuts << "\n";
 
     TFile* outDir = TFile::Open(OUT_FILE_NAME, "RECREATE");
@@ -419,6 +411,26 @@ int main(const int argc, const char** argv)
     for(auto& study: studies) study->SaveOrDraw(*outDir);
     for(auto& var: vars) var->Write(*outDir);
     for(auto& var: vars2D) var->Write(*outDir);
+
+    //Other metadata needed to extract a cross section from this file
+    //POT scale
+    auto mcPOT = new TParameter<double>("MCPOTUsed", options.m_mc_pot);
+    mcPOT->Write();
+    auto dataPOT = new TParameter<double>("DataPOTUsed", options.m_data_pot);
+    dataPOT->Write();
+
+    //Flux integral
+    assert(error_bands["cv"].size() == 1 && "List of error bands must contain a universe named \"cv\" for the flux integral.");
+    assert(!vars.empty() && "No Variables from which to pick a flux integral template.");
+    util::GetFluxIntegral(*error_bands["cv"].front(), vars.front()->efficiencyNumerator->hist)->Write();
+
+    //Number of nucleons in the fiducial volume
+    PlotUtils::TargetUtils targetInfo;
+    //TODO: Make sure minZ, maxZ, and apothem match signal definition somehow
+    const double minZ = 5980, maxZ = 8422, apothem = 850; //All in mm
+    //Always use MC number of nucleons for cross section
+    auto nNucleons = new TParameter<double>("NNucleons", targetInfo.GetTrackerNNucleons(minZ, maxZ, true, apothem));
+    nNucleons->Write();
 
     std::cout << "Success" << std::endl;
   }

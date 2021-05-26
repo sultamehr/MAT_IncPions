@@ -13,7 +13,6 @@
 #include "PlotUtils/MnvTuneSystematics.h"
 
 typedef std::map<std::string, std::vector<CVUniverse*>> UniverseMap;
-const unsigned int kNFluxUniverses = 5;
 
 UniverseMap GetStandardSystematics(PlotUtils::ChainWrapper* chain,
                                    bool is_truth = false) {
@@ -27,7 +26,7 @@ UniverseMap GetStandardSystematics(PlotUtils::ChainWrapper* chain,
   // FLUX
   //========================================================================
   UniverseMap bands_flux =
-      PlotUtils::GetFluxSystematicsMap<CVUniverse>(chain, kNFluxUniverses);
+      PlotUtils::GetFluxSystematicsMap<CVUniverse>(chain, CVUniverse::GetNFluxUniverses());
   error_bands.insert(bands_flux.begin(), bands_flux.end());
 
   //========================================================================
