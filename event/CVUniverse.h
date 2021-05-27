@@ -97,12 +97,22 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
     return GetInt("phys_n_dead_discr_pair_upstream_prim_track_proj");;
   }
   
+  //TODO: If there was a spline correcting Eavail, it might not really be Eavail.
+  //      Our energy correction spline, one of at least 2 I know of, corrects q0
+  //      so that we get the right neutrino energy in an inclusive sample.  So,
+  //      this function could be correcting for neutron energy which Eavail should
+  //      not do.
   virtual double GetEavail() const {
     return GetDouble("recoilE_SplineCorrected");
   }
   
   virtual double GetQ2Reco() const{
     return GetDouble("qsquared_recoil");
+  }
+
+  //GetRecoilE is designed to match the NSF validation suite
+  virtual double GetRecoilE() const {
+    return GetVecElem("recoil_summed_energy", 0);
   }
   
   virtual double Getq3() const{

@@ -328,8 +328,7 @@ int main(const int argc, const char** argv)
     return badInputFile;
   }
 
-  const bool doCCQENuValidation = (reco_tree_name == "CCQENu");
-  if(doCCQENuValidation) std::cerr << "Detected that tree name is CCQENu.  Making validation histograms and disabling systematics.\n";
+  const bool doCCQENuValidation = (reco_tree_name == "CCQENu"); //Enables extra histograms and might influence which systematics I use.
 
   const bool is_grid = false;
   PlotUtils::MacroUtil options(reco_tree_name, mc_file_list, data_file_list, "minervame1A", true, is_grid);
@@ -344,14 +343,19 @@ int main(const int argc, const char** argv)
   // Leave out systematics when making validation histograms
   //TODO: This might not work with the NSF Validation Suite.  I think it uses CCQENu tuples.
   std::map< std::string, std::vector<CVUniverse*> > error_bands;
-  if(!doCCQENuValidation) error_bands = GetStandardSystematics(options.m_mc);
+  error_bands = GetStandardSystematics(options.m_mc);
   error_bands["cv"] = {new CVUniverse(options.m_mc)};
   std::map< std::string, std::vector<CVUniverse*> > truth_bands;
-  if(!doCCQENuValidation) truth_bands = GetStandardSystematics(options.m_truth);
+  truth_bands = GetStandardSystematics(options.m_truth);
   truth_bands["cv"] = {new CVUniverse(options.m_truth)};
 
   std::vector<double> dansPTBins = {0, 0.075, 0.15, 0.25, 0.325, 0.4, 0.475, 0.55, 0.7, 0.85, 1, 1.25, 1.5, 2.5, 4.5},
-                      dansPzBins = {1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 15, 20, 40, 60};
+                      dansPzBins = {1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 15, 20, 40, 60},
+                      robsEmuBins = {0,1,2,3,4,5,7,9,12,15,18,22,36,50,75,100,120},
+                      robsRecoilBins; // = {0,50,100,150, 200, 250, 300, ,4900,4950,500};
+
+  const double robsRecoilBinWidth = 50; //MeV
+  for(int whichBin = 0; whichBin < 100 + 1; ++whichBin) robsRecoilBins.push_back(robsRecoilBinWidth * whichBin);
 
   std::vector<Variable*> vars = {
     new Variable("pTmu", "p_{T, #mu} [GeV/c]", dansPTBins, &CVUniverse::GetMuonPT, &CVUniverse::GetMuonPTTrue),
@@ -360,7 +364,10 @@ int main(const int argc, const char** argv)
   std::vector<Variable2D*> vars2D;
   if(doCCQENuValidation)
   {
+    std::cerr << "Detected that tree name is CCQENu.  Making validation histograms.\n";
     vars.push_back(new Variable("pzmu", "p_{||, #mu} [GeV/c]", dansPzBins, &CVUniverse::GetMuonPz, &CVUniverse::GetMuonPzTrue));
+    vars.push_back(new Variable("Emu", "E_{#mu} [GeV]", robsEmuBins, &CVUniverse::GetEmu, &CVUniverse::GetElepTrue));
+    vars.push_back(new Variable("Erecoil", "E_{recoil}", robsRecoilBins, &CVUniverse::GetRecoilE, &CVUniverse::Getq0True)); //TODO: q0 is not the same as recoil energy without a spline correction
     vars2D.push_back(new Variable2D(*vars[1], *vars[0]));
   }
   //TODO: Disable validation suite histograms too if the tree name is not CCQENu
