@@ -338,6 +338,7 @@ int main(const int argc, const char** argv)
   PlotUtils::MinervaUniverse::SetPlaylist(options.m_plist_string); //TODO: Infer this from the files somehow?
   PlotUtils::MinervaUniverse::SetAnalysisNuPDG(14);
   PlotUtils::MinervaUniverse::SetNFluxUniverses(100);
+  PlotUtils::MinervaUniverse::SetZExpansionFaReweight(false);
 
   // Make a map of systematic universes
   // Leave out systematics when making validation histograms

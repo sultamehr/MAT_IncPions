@@ -34,7 +34,7 @@ UniverseMap GetStandardSystematics(PlotUtils::ChainWrapper* chain,
   //========================================================================
   // Standard
   UniverseMap bands_genie =
-      PlotUtils::GetStandardGenieSystematicsMap<CVUniverse>(chain);
+      PlotUtils::GetGenieSystematicsMap<CVUniverse>(chain); //PlotUtils::GetStandardGenieSystematicsMap<CVUniverse>(chain);
   error_bands.insert(bands_genie.begin(), bands_genie.end());
 
   //========================================================================
