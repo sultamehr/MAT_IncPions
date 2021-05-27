@@ -66,6 +66,16 @@ class CVUniverse : public PlotUtils::MinervaUniverse {
     return GetPlepTrue()/1000. * cos(GetThetalepTrue());
   }
 
+  double GetEmuGeV() const //GeV
+  {
+    return GetEmu()/1000.;
+  }
+
+  double GetElepTrueGeV() const //GeV
+  {
+    return GetElepTrue()/1000.;
+  }
+
   int GetInteractionType() const {
     return GetInt("mc_intType");
   }

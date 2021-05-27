@@ -25,7 +25,7 @@ namespace util
     const bool useMuonCorrelations = true;
     assert(!(useMuonCorrelations && (univ.GetAnalysisNuPDG() < 0)) && "Muon momentum correlations are not yet ready for ME antineutrino analyses!");
 
-    auto& frw = PlotUtils::flux_reweighter(univ.GetPlaylist(), univ.GetAnalysisNuPDG(), univ.UseNuEConstraint, univ.GetNFluxUniverses());
+    auto& frw = PlotUtils::flux_reweighter(univ.GetPlaylist(), univ.GetAnalysisNuPDG(), univ.UseNuEConstraint(), univ.GetNFluxUniverses());
     return frw.GetIntegratedFluxReweighted(univ.GetAnalysisNuPDG(), templateHist, Emin, Emax, useMuonCorrelations);
   }
 }
