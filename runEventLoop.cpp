@@ -54,6 +54,7 @@ enum ErrorCodes
 #include "util/Variable.h"
 #include "util/Variable2D.h"
 #include "util/GetFluxIntegral.h"
+#include "util/GetPlaylist.h"
 #include "cuts/SignalDefinition.h"
 #include "cuts/q3RecoCut.h"
 #include "studies/Study.h"
@@ -338,7 +339,8 @@ int main(const int argc, const char** argv)
   const bool doCCQENuValidation = (reco_tree_name == "CCQENu"); //Enables extra histograms and might influence which systematics I use.
 
   const bool is_grid = false;
-  PlotUtils::MacroUtil options(reco_tree_name, mc_file_list, data_file_list, "minervame1L", true, is_grid); //TODO: Tutorial is me1A, but validation suite is me1L.  Write a flux database to figure this out.  Or better yet, copy mine...
+  PlotUtils::MacroUtil options(reco_tree_name, mc_file_list, data_file_list, "minervame1A", true, is_grid);
+  options.m_plist_string = util::GetPlaylist(*options.m_mc, true); //TODO: Put GetPlaylist into PlotUtils::MacroUtil
 
   // You're required to make some decisions
   PlotUtils::MinervaUniverse::SetNuEConstraint(true);
