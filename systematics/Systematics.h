@@ -11,11 +11,12 @@
 #include "PlotUtils/MinosEfficiencySystematics.h"
 #include "PlotUtils/MuonSystematics.h"
 #include "PlotUtils/MnvTuneSystematics.h"
+#include "PlotUtils/MuonResolutionSystematics.h"
 
 typedef std::map<std::string, std::vector<CVUniverse*>> UniverseMap;
 
-UniverseMap GetStandardSystematics(PlotUtils::ChainWrapper* chain,
-                                   bool is_truth = false) {
+UniverseMap GetStandardSystematics(PlotUtils::ChainWrapper* chain)
+{
   // return map
   UniverseMap error_bands;
 
@@ -48,7 +49,6 @@ UniverseMap GetStandardSystematics(PlotUtils::ChainWrapper* chain,
   UniverseMap bands_2p2h = PlotUtils::Get2p2hSystematicsMap<CVUniverse>(chain);
   error_bands.insert(bands_2p2h.begin(), bands_2p2h.end());
 
-    /*
   //========================================================================
   // Muons
   //========================================================================
@@ -72,11 +72,16 @@ UniverseMap GetStandardSystematics(PlotUtils::ChainWrapper* chain,
       PlotUtils::GetMinosEfficiencySystematicsMap<CVUniverse>(chain);
   error_bands.insert(bands_minoseff.begin(), bands_minoseff.end());
 
-  for (auto band : error_bands) {
-    std::vector<CVUniverse*> universes = band.second;
-    for (auto universe : universes) universe->SetTruth(is_truth);
-  }
-     */
+  UniverseMap bands_muon_resolution = PlotUtils::GetMuonResolutionSystematicsMap<CVUniverse>(chain);
+  error_bands.insert(bands_muon_resolution.begin(), bands_muon_resolution.end());
+
+  UniverseMap bands_geant = PlotUtils::GetGeantHadronSystematicsMap<CVUniverse>(chain);
+  error_bands.insert(bands_geant.begin(), bands_geant.end());
+
+  //TODO: There's some special recoil function I need to write for the response systematics to work correctly
+  /*UniverseMap bands_response = PlotUtils::GetResponseSystematicsMap<CVUniverse>(chain);
+  error_bands.insert(bands_response.begin(), bands_response.end());*/
+
   return error_bands;
 }
 
