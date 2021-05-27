@@ -12,6 +12,7 @@
 #include "PlotUtils/MuonSystematics.h"
 #include "PlotUtils/MnvTuneSystematics.h"
 #include "PlotUtils/MuonResolutionSystematics.h"
+#include "PlotUtils/AngleSystematics.h"
 
 typedef std::map<std::string, std::vector<CVUniverse*>> UniverseMap;
 
@@ -78,6 +79,11 @@ UniverseMap GetStandardSystematics(PlotUtils::ChainWrapper* chain)
   UniverseMap bands_geant = PlotUtils::GetGeantHadronSystematicsMap<CVUniverse>(chain);
   error_bands.insert(bands_geant.begin(), bands_geant.end());
 
+  // Beam angle
+  UniverseMap bands_angle = PlotUtils::GetAngleSystematicsMap<CVUniverse>(chain);
+  error_bands.insert(bands_angle.begin(), bands_angle.end());
+
+  // Hadron inelastics cross sections
   //TODO: There's some special recoil function I need to write for the response systematics to work correctly
   /*UniverseMap bands_response = PlotUtils::GetResponseSystematicsMap<CVUniverse>(chain);
   error_bands.insert(bands_response.begin(), bands_response.end());*/

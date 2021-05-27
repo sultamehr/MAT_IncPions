@@ -338,7 +338,7 @@ int main(const int argc, const char** argv)
   const bool doCCQENuValidation = (reco_tree_name == "CCQENu"); //Enables extra histograms and might influence which systematics I use.
 
   const bool is_grid = false;
-  PlotUtils::MacroUtil options(reco_tree_name, mc_file_list, data_file_list, "minervame1A", true, is_grid);
+  PlotUtils::MacroUtil options(reco_tree_name, mc_file_list, data_file_list, "minervame1L", true, is_grid); //TODO: Tutorial is me1A, but validation suite is me1L.  Write a flux database to figure this out.  Or better yet, copy mine...
 
   // You're required to make some decisions
   PlotUtils::MinervaUniverse::SetNuEConstraint(true);
@@ -402,7 +402,7 @@ int main(const int argc, const char** argv)
   auto precuts = reco::GetCCInclusive2DCuts<CVUniverse, MichelEvent>();
   auto signalDefinition = truth::GetCCInclusive2DSignal<CVUniverse>();
   auto phaseSpace = truth::GetCCInclusive2DPhaseSpace<CVUniverse>();
-  phaseSpace.emplace_back(new MaxPzMu<CVUniverse>(60e3));
+  //phaseSpace.emplace_back(new MaxPzMu<CVUniverse>(60e3));
 
   PlotUtils::Cutter<CVUniverse, MichelEvent> mycuts(std::move(precuts), std::move(sidebands) , std::move(signalDefinition),std::move(phaseSpace));
   PlotUtils::Model<CVUniverse, MichelEvent> model(GetMnvTunev1<CVUniverse, MichelEvent>());

@@ -242,7 +242,8 @@ int main(const int argc, const char** argv)
       auto unfolded = UnfoldHist(bkgSubtracted, migration, nIterations);
       if(!unfolded) throw std::runtime_error(std::string("Failed to unfold ") + folded->GetName() + " using " + migration->GetName());
       Plot(*unfolded, "unfolded", prefix);
-      unfolded->Clone()->Write("unfolded");
+      unfolded->Clone()->Write("unfolded"); //TODO: Seg fault first appears when I uncomment this line
+      std::cout << "Survived writing the unfolded histogram.\n" << std::flush; //This is evidence that the problem is on the final file Write() and not unfolded->Clone()->Write().
 
       effNum->Divide(effNum, effDenom); //Only the 2 parameter version of MnvH1D::Divide()
                                         //handles systematics correctly.
