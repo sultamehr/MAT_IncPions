@@ -341,7 +341,6 @@ int main(const int argc, const char** argv)
 
   // Make a map of systematic universes
   // Leave out systematics when making validation histograms
-  //TODO: This might not work with the NSF Validation Suite.  I think it uses CCQENu tuples.
   std::map< std::string, std::vector<CVUniverse*> > error_bands;
   error_bands = GetStandardSystematics(options.m_mc);
   error_bands["cv"] = {new CVUniverse(options.m_mc)};
