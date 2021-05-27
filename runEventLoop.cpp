@@ -17,6 +17,12 @@
 "all histograms needed for the ExtractCrossSection program also built by this\n"\
 "package.  You'll need a .rootlogon.C that loads ROOT object definitions from\n"\
 "PlotUtils to access systematics information from these files.\n\n"\
+"*** Environment Variables ***\n"\
+"Setting up this package appends to PATH and LD_LIBRARY_PATH.  PLOTUTILSROOT,\n"\
+"MPARAMFILESROOT, and MPARAMFILES must be set according to the setup scripts in\n"\
+"those packages for systematics and flux reweighters to function.\n"\
+"If MNV_SKIP_SYST is defined at all, output histograms will have no error bands.\n"\
+"This is useful for debugging the CV and running warping studies.\n\n"\
 "*** Return Codes ***\n"\
 "0 indicates success.  All histograms are valid only in this case.  Any other\n"\
 "return code indicates that histograms should not be used.  Error messages\n"\
@@ -71,6 +77,7 @@ enum ErrorCodes
 
 //c++ includes
 #include <iostream>
+#include <cstdlib> //getenv()
 
 //==============================================================================
 // Loop and Fill
@@ -342,11 +349,14 @@ int main(const int argc, const char** argv)
 
   // Make a map of systematic universes
   // Leave out systematics when making validation histograms
+  const bool doSystematics = (getenv("MNV101_SKIP_SYST") == nullptr);
+  if(!doSystematics) std::cout << "Skipping systematics because environment variable MNV101_SKIP_SYST is set.\n";
+
   std::map< std::string, std::vector<CVUniverse*> > error_bands;
-  error_bands = GetStandardSystematics(options.m_mc);
+  if(doSystematics) error_bands = GetStandardSystematics(options.m_mc);
   error_bands["cv"] = {new CVUniverse(options.m_mc)};
   std::map< std::string, std::vector<CVUniverse*> > truth_bands;
-  truth_bands = GetStandardSystematics(options.m_truth);
+  if(doSystematics) truth_bands = GetStandardSystematics(options.m_truth);
   truth_bands["cv"] = {new CVUniverse(options.m_truth)};
 
   std::vector<double> dansPTBins = {0, 0.075, 0.15, 0.25, 0.325, 0.4, 0.475, 0.55, 0.7, 0.85, 1, 1.25, 1.5, 2.5, 4.5},
