@@ -3,8 +3,13 @@
 from ROOT import *
 from ROOT import PlotUtils
 
+gROOT.SetBatch() #Don't render histograms to a window.  Also gets filled areas correct.
+
 var = "pTmu"
 dataName = var + "_data"
+
+ratioMin = 0.7
+ratioMax = 1.3
 
 bottomFraction = 0.2
 margin = 0.078 #Tuned by hand
@@ -23,6 +28,7 @@ dataPOT = dataFile.Get("POTUsed").GetVal()
 #information.
 mcStack = THStack()
 signalHist = mcFile.Get(var + "_selected_signal_reco")
+signalHist.Scale(dataPOT/mcPOT)
 mcSum = signalHist.Clone()
 for key in mcFile.GetListOfKeys():
   name = str(key.GetName())
@@ -56,14 +62,10 @@ bottom.Draw()
 
 top.cd()
 mcTotal = mcStack.GetStack().Last()
-mcTotal.SetTitle("MnvTunev1")
-mcTotal.GetYaxis().SetLabelSize(labelSize * (bottomFraction + margin))
-mcTotal.GetYaxis().SetTitleSize(0.06) #TODO: Tuned by hand
-mcTotal.GetYaxis().SetTitleOffset(0.6) #TODO: Tuned by hand
-
 mcTotal.Draw("E2") #Draw the error envelope only.  Not used here except to force the THStack to calculate its sum.
 
 mcStack.SetMinimum(1)
+mcStack.SetMaximum(mcTotal.GetMaximum() * 10) #Make room for annotations above the plot
 mcStack.Draw("HIST")
 
 dataWithStatErrors.SetLineColor(kBlack)
@@ -76,26 +78,21 @@ dataWithStatErrors.Draw("SAME")
 
 legend = top.BuildLegend(0.5, 0.4, 0.9, 0.9) #TODO: Explain legend position.  ROOT 6 might even make an intelligent decision about where to place it.
 
-#Draw the MC line itself after creating the legend so it doesn't show up in the leveng twice!
-lineOnly = mcTotal.Clone()
-lineOnly.SetFillStyle(0) #No fill
-lineOnly.Draw("HIST SAME")
-
 #Data/MC ratio panel
 bottom.cd()
 bottom.SetTopMargin(0)
 bottom.SetBottomMargin(0.3)
 
 ratio = dataHist.Clone()
-mcRatio = mcSum #mcStack.GetStack().Last().Clone()
-ratio.Divide(ratio, mcRatio)
+mcTotalWithSys = mcSum
+ratio.Divide(ratio, mcTotalWithSys)
 
 #TODO: I need GetCVHistoWithError() from mcRatio, but THStack doesn't keep a MnvH1D.  I have to Add() the histograms myself.
 
 #Now fill mcRatio with 1 for bin content and fractional error
-for whichBin in range(0, mcRatio.GetXaxis().GetNbins()):
-  if mcRatio.GetBinContent(whichBin) > 0: mcRatio.SetBinError(whichBin, mcRatio.GetBinError(whichBin)/mcRatio.GetBinContent(whichBin))
-  else: mcRatio.SetBinError(whichBin, 0)
+mcRatio = mcTotalWithSys.GetTotalError(False, True, False) #The second "true" makes this fractional error
+for whichBin in range(1, mcRatio.GetXaxis().GetNbins()+1):
+  mcRatio.SetBinError(whichBin, max(mcRatio.GetBinContent(whichBin), 1e-9))
   mcRatio.SetBinContent(whichBin, 1)
 
 ratio.SetTitle("")
@@ -113,7 +110,8 @@ ratio.GetXaxis().SetTitleSize(0.16)
 ratio.GetXaxis().SetTitleOffset(0.9)
 ratio.GetXaxis().SetLabelSize(labelSize)
 
-#This is a good place to set limits on the ratio shown.  e.g. ratio.SetMinimum(0.5)
+ratio.SetMinimum(ratioMin)
+ratio.SetMaximum(ratioMax)
 ratio.Draw()
 
 #Error envelope for the MC
