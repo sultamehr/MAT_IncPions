@@ -382,7 +382,6 @@ int main(const int argc, const char** argv)
     vars.push_back(new Variable("Erecoil", "E_{recoil}", robsRecoilBins, &CVUniverse::GetRecoilE, &CVUniverse::Getq0True)); //TODO: q0 is not the same as recoil energy without a spline correction
     vars2D.push_back(new Variable2D(*vars[1], *vars[0]));
   }
-  //TODO: Disable validation suite histograms too if the tree name is not CCQENu
 
   std::vector<Study*> studies;
 
