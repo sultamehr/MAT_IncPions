@@ -21,7 +21,7 @@
 "Setting up this package appends to PATH and LD_LIBRARY_PATH.  PLOTUTILSROOT,\n"\
 "MPARAMFILESROOT, and MPARAMFILES must be set according to the setup scripts in\n"\
 "those packages for systematics and flux reweighters to function.\n"\
-"If MNV_SKIP_SYST is defined at all, output histograms will have no error bands.\n"\
+"If MNV101_SKIP_SYST is defined at all, output histograms will have no error bands.\n"\
 "This is useful for debugging the CV and running warping studies.\n\n"\
 "*** Return Codes ***\n"\
 "0 indicates success.  All histograms are valid only in this case.  Any other\n"\
