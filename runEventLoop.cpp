@@ -138,7 +138,7 @@ void LoopAndFillEventSelection(
             //Cross section components
             var->efficiencyNumerator->FillUniverse(universe, var->GetTrueValue(*universe), weight);
             var->migration->FillUniverse(universe, var->GetRecoValue(*universe), var->GetTrueValue(*universe), weight);
-            var->selectedSignalReco->FillUniverse(universe, var->GetRecoValue(*universe), weight); //Efficiency numerator in reco variables.  Usefule for warping studies.
+            var->selectedSignalReco->FillUniverse(universe, var->GetRecoValue(*universe), weight); //Efficiency numerator in reco variables.  Useful for warping studies.
           }
 
           for(auto& var: vars2D)
@@ -444,8 +444,8 @@ int main(const int argc, const char** argv)
 
     for(const auto& var: vars)
     {
-      //Flux integral
-      util::GetFluxIntegral(*error_bands["cv"].front(), var->efficiencyNumerator->hist)->Write((var->GetName() + "_reweightedflux_integrated").c_str());
+      //Flux integral, which only works if there are flux universes
+      if(doSystematics) util::GetFluxIntegral(*error_bands["cv"].front(), var->efficiencyNumerator->hist)->Write((var->GetName() + "_reweightedflux_integrated").c_str());
       //TODO: Make sure minZ, maxZ, and apothem match signal definition somehow
       const double minZ = 5980, maxZ = 8422, apothem = 850; //All in mm
       //Always use MC number of nucleons for cross section
