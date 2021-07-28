@@ -53,7 +53,7 @@ ExternalProject_Add(GENIEXSecExtract
                     GIT_TAG main
                     SOURCE_DIR "${SOURCE_CODE_DIR}/GENIEXSecExtract"
                     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-                    DEPENDS MAT)
+                    DEPENDS MAT MAT-MINERvA)
 
 #MParamFiles doesn't need to be built or installed.  It's a bunch of text and .root files that programs need to be able to find.
 #Nothing depends on MParamFiles to build, but it does need to be installed before much of libPlotUtils can be used.
