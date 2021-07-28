@@ -31,8 +31,8 @@ ExternalProject_Add(MAT
                     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE})
 
 ExternalProject_Add(MAT-MINERvA
-                    #GIT_REPOSITORY git@github.com:MinervaExpt/MAT-MINERvA.git
-                    #GIT_TAG main
+                    GIT_REPOSITORY git@github.com:MinervaExpt/MAT-MINERvA.git
+                    GIT_TAG main
                     SOURCE_DIR "${SOURCE_CODE_DIR}/MAT-MINERvA"
                     #UPDATE_COMMAND ""
                     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
@@ -49,9 +49,8 @@ ExternalProject_Add(UnfoldUtils
                     DEPENDS MAT MAT-MINERvA)
 
 ExternalProject_Add(GENIEXSecExtract
-                    CVS_REPOSITORY minervacvs@cdcvs.fnal.gov:/cvs/mnvsoft
-                    CVS_MODULE GENIEXSecExtract
-                    ${CVS_DOWNLOAD_COMMAND}
+                    GIT_REPOSITORY git@github.com:MinervaExpt/GENIEXSecExtract.git
+                    GIT_TAG main
                     SOURCE_DIR "${SOURCE_CODE_DIR}/GENIEXSecExtract"
                     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                     DEPENDS MAT)
