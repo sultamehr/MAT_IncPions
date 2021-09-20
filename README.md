@@ -45,9 +45,10 @@ terminal, but you can separate them from everything else with something like:
 0. [git](https://git-scm.com/downloads): version control system.  **You probably already have this**
 1. [CMake 2.8](https://cmake.org/install/): build system generator for lots of operating systems.  **You probably already have this**
 2. [ROOT](https://root.cern/install/): object-oriented toolkit for high energy physics analysis.  Make sure to enable at least xrootd, kerberos, and Minuit for this tutorial.  **Already installed on MINERvA GPVMs**
-3. [MAT](https://github.com/MinervaExpt/MAT): the MINERvA Analysis Toolkit
-4. [MAT-MINERvA](https://github.com/MinervaExpt/MAT-MINERvA): MINERvA-specific systematics and other plugins to the MAT
-5. [UnfoldUtils](https://github.com/MinervaExpt/UnfoldUtils): MINERvA's fork of [RooUnfold](https://gitlab.cern.ch/RooUnfold/RooUnfold) with a compatibility layer for embedding systematics in histograms and MINERvA-specific systematics tweaks (TODO: via github)
-6. [GENIEXSecExtract](https://github.com/MinervaExpt/GENIEXSecExtract): MINERvA's closure test procedure
-7. [MParamFiles](https://cdcvs.fnal.gov/redmine/projects/minerva-sw/repository/show/AnalysisFramework/MParamFiles): additional reweighting and calibration parameters for MINERvA systematics
-8. [MATFluxAndReweightFiles](https://cdcvs.fnal.gov/redmine/projects/minerva-sw/repository/show/AnalysisFramework/Ana/MATFluxAndReweightFiles): the flux incident on the MINERvA detector during different run periods and some more reweight configurations for systematic uncertainties
+3. [CVS](https://www.gnu.org/software/trans-coord/manual/cvs/cvs.html): legacy version control system for MParamFiles.  Install it with your package manager.
+4. [MAT](https://github.com/MinervaExpt/MAT): the MINERvA Analysis Toolkit
+5. [MAT-MINERvA](https://github.com/MinervaExpt/MAT-MINERvA): MINERvA-specific systematics and other plugins to the MAT
+6. [UnfoldUtils](https://github.com/MinervaExpt/UnfoldUtils): MINERvA's fork of [RooUnfold](https://gitlab.cern.ch/RooUnfold/RooUnfold) with a compatibility layer for embedding systematics in histograms and MINERvA-specific systematics tweaks (TODO: via github)
+7. [GENIEXSecExtract](https://github.com/MinervaExpt/GENIEXSecExtract): MINERvA's closure test procedure
+8. [MParamFiles](https://cdcvs.fnal.gov/redmine/projects/minerva-sw/repository/show/AnalysisFramework/MParamFiles): additional reweighting and calibration parameters for MINERvA systematics
+9. [MATFluxAndReweightFiles](https://cdcvs.fnal.gov/redmine/projects/minerva-sw/repository/show/AnalysisFramework/Ana/MATFluxAndReweightFiles): the flux incident on the MINERvA detector during different run periods and some more reweight configurations for systematic uncertainties
