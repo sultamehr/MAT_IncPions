@@ -11,6 +11,7 @@ set( GCC_Flags_For_CXX "-std=c++1y -Wall" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_Flags_For_CXX}" )
 set( CMAKE_CXX_FLAGS_DEBUG "-ggdb" )
 set( CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" )
+set( CMAKE_CXX_STANDARD 14 )
 
 #Add a PROFiling CMAKE_BUILD_TYPE
 set( CMAKE_CXX_FLAGS_PROF "-ggdb -pg -DNDEBUG" )
