@@ -104,7 +104,7 @@ void LoopAndFillEventSelection(
   const int nEntries = chain->GetEntries();
   for (int i=0; i<nEntries; ++i)
   {
-    if(i%1000==0) std::cout << i << " / " << nEntries << "\r" << std::flush;
+    if(i%1000==0) std::cout << i << " / " << nEntries << "\r" <<std::flush;
 
     MichelEvent cvEvent;
     cvUniv->SetEntry(i);
@@ -123,13 +123,12 @@ void LoopAndFillEventSelection(
     
         // Tell the Event which entry in the TChain it's looking at
         universe->SetEntry(i);
-        
+         
         // This is where you would Access/create a Michel
 
         //weight is ignored in isMCSelected() for all but the CV Universe.
         if (!michelcuts.isMCSelected(*universe, myevent, cvWeight).all()) continue; //all is another function that will later help me with sidebands
         const double weight = model.GetWeight(*universe, myevent); //Only calculate the per-universe weight for events that will actually use it.
-
         for(auto& var: vars) var->selectedMCReco->FillUniverse(universe, var->GetRecoValue(*universe), weight); //"Fake data" for closure
 
         const bool isSignal = michelcuts.isSignal(*universe, weight);
@@ -354,13 +353,16 @@ int main(const int argc, const char** argv)
   PlotUtils::MinervaUniverse::SetNFluxUniverses(100);
   PlotUtils::MinervaUniverse::SetZExpansionFaReweight(false);
 
+  PlotUtils::MinervaUniverse::RPAMaterials(true); 
+
   //Now that we've defined what a cross section is, decide which sample and model
   //we're extracting a cross section for.
   PlotUtils::Cutter<CVUniverse, MichelEvent>::reco_t sidebands, preCuts;
   PlotUtils::Cutter<CVUniverse, MichelEvent>::truth_t signalDefinition, phaseSpace;
 
-  const double minZ = 5980, maxZ = 8422, apothem = 850; //All in mm
-  preCuts.emplace_back(new reco::ZRange<CVUniverse, MichelEvent>("Tracker", minZ, maxZ));
+  //const double minZ = 5980, maxZ = 8422, apothem = 850; //All in mm
+  const double minZ = 4305, maxZ = 5980, apothem = 850; //All in mm
+  preCuts.emplace_back(new reco::ZRange<CVUniverse, MichelEvent>("Target", minZ, maxZ));
   preCuts.emplace_back(new reco::Apothem<CVUniverse, MichelEvent>(apothem));
   preCuts.emplace_back(new reco::MaxMuonAngle<CVUniverse, MichelEvent>(20.));
   preCuts.emplace_back(new reco::HasMINOSMatch<CVUniverse, MichelEvent>());
